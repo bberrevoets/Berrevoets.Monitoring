@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>dotnet-Berrevoets.Monitoring.MigrationService-3b568c28-c734-4b56-9b4e-8a0baf9593fd</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="9.2.1" />		
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+		    <ProjectReference Include="..\Berrevoets.Monitoring.Entities\Berrevoets.Monitoring.Entities.csproj" />
+<ProjectReference Include="..\Berrevoets.Monitoring.ServiceDefaults\Berrevoets.Monitoring.ServiceDefaults.csproj" />
+	</ItemGroup>
+</Project>
