@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Berrevoets.Monitoring.MigrationService\Berrevoets.Monitoring.MigrationService.csproj" />
     <ProjectReference Include="..\Berrevoets.Monitoring\Berrevoets.Monitoring\Berrevoets.Monitoring.csproj" />
   </ItemGroup>
 
