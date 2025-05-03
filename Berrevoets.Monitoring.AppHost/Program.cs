@@ -1,3 +1,5 @@
+using k8s.Models;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var password = builder.AddParameter("password", true);
@@ -13,9 +15,11 @@ builder.AddProject<Projects.Berrevoets_Monitoring_MigrationService>("berrevoets-
     .WaitFor(db)
     .WithParentRelationship(sqlServer);
 
-builder.AddProject<Projects.Berrevoets_Monitoring>("berrevoets-monitoring")
+var monitoring = builder.AddProject<Projects.Berrevoets_Monitoring>("berrevoets-monitoring")
     .WithReference(db)
     .WaitFor(db)
     .WithExternalHttpEndpoints();
+
+monitoring.WithUrl($"{monitoring.GetEndpoint("https")}/see_all", "See all");
 
 builder.Build().Run();
