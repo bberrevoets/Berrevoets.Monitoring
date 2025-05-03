@@ -1,7 +1,7 @@
-using Berrevoets.Monitoring.Client.Pages;
 using Berrevoets.Monitoring.Components;
 using Berrevoets.Monitoring.Entities;
 using Berrevoets.Monitoring.Entities.DTO;
+using Berrevoets.Monitoring.HUB;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,12 +10,33 @@ builder.AddServiceDefaults();
 
 builder.AddSqlServerDbContext<HealthConfigDbContext>("health-config");
 
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policy =>
+    {
+        policy
+            .SetIsOriginAllowed(_ => true)
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+});
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
 var app = builder.Build();
+
+app.UseCors("CorsPolicy");
+
+app.MapHub<MonitorHub>("/monitorHub");
 
 app.MapGet("/see_all", async (HealthConfigDbContext db) =>
 {
@@ -64,7 +85,6 @@ else
 }
 
 app.UseHttpsRedirection();
-
 
 app.UseAntiforgery();
 
