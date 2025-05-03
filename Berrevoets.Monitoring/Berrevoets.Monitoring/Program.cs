@@ -1,9 +1,12 @@
 using Berrevoets.Monitoring.Client.Pages;
 using Berrevoets.Monitoring.Components;
+using Berrevoets.Monitoring.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+builder.AddSqlServerDbContext<HealthConfigDbContext>(connectionName: "health-config");
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
