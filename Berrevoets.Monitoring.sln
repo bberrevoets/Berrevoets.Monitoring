@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Berrevoets.Monitoring.AppHo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Berrevoets.Monitoring.ServiceDefaults", "Berrevoets.Monitoring.ServiceDefaults\Berrevoets.Monitoring.ServiceDefaults.csproj", "{F1549674-242F-F632-A210-14145F535E50}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aspire", "Aspire", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CA8BEBE6-1249-4E77-9CF9-34776B8776CF} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{F1549674-242F-F632-A210-14145F535E50} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D1C01F8B-11B9-44B2-AC45-4AB2AC0012BA}
