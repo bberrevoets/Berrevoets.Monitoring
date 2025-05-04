@@ -16,3 +16,13 @@
     border-radius: 50%;
     display: inline-block;
 }
+
+/* Style for inactive applications */
+.inactive-app {
+    opacity: 0.6; /* Make the card semi-transparent */
+    filter: grayscale(50%); /* Apply grayscale effect */
+}
+
+.inactive-app .card {
+    border: 1px dashed #ccc; /* Use dashed border to indicate inactive status */
+}
