@@ -5,7 +5,7 @@
 
 <h2 class="mb-4">Application Management</h2>
 
-@if (_environments.Count == 0)
+@if (Environments.Count == 0)
 {
     <div class="alert alert-warning">
         <IconComponent Icon="@Icons.EXCLAMATION_TRIANGLE" Size="20"/>
@@ -24,7 +24,7 @@ else
         <div class="form-group">
             <select class="form-select" @bind="_selectedEnvironmentId">
                 <option value="">All Environments</option>
-                @foreach (var env in _environments)
+                @foreach (var env in Environments)
                 {
                     <option value="@env.Id">@env.Name</option>
                 }
@@ -83,7 +83,7 @@ else
                         <div class="mb-3">
                             <label for="envId" class="form-label">Environment</label>
                             <select id="envId" class="form-select" @bind="_editingApplication!.EnvironmentId">
-                                @foreach (var env in _environments)
+                                @foreach (var env in Environments)
                                 {
                                     <option value="@env.Id">@env.Name</option>
                                 }
@@ -137,7 +137,6 @@ else
     [Parameter]
     public EventCallback OnApplicationUpdated { get; set; }
 
-    private List<MonitoredEnvironmentDto> _environments => Environments;
     private bool _showApplicationModal;
     private MonitoredApplicationDto? _editingApplication;
     private string? _selectedEnvironmentId;
@@ -146,7 +145,7 @@ else
     {
         var applications = new List<MonitoredApplicationDto>();
 
-        foreach (var env in _environments)
+        foreach (var env in Environments)
         {
             if (string.IsNullOrEmpty(_selectedEnvironmentId) ||
                 env.Id.ToString() == _selectedEnvironmentId)
@@ -177,7 +176,7 @@ else
 
     private string GetEnvironmentName(Guid environmentId)
     {
-        return _environments.FirstOrDefault(e => e.Id == environmentId)?.Name ?? "Unknown";
+        return Environments.FirstOrDefault(e => e.Id == environmentId)?.Name ?? "Unknown";
     }
 
     private void ShowApplicationModal(MonitoredApplicationDto? application)
@@ -191,7 +190,7 @@ else
                 Name = "",
                 Description = "",
                 HealthEndpoint = "https://",
-                EnvironmentId = _environments.FirstOrDefault()?.Id ?? Guid.Empty, // Default to first environment
+                EnvironmentId = Environments.FirstOrDefault()?.Id ?? Guid.Empty, // Default to first environment
                 IsActive = true
             };
         }
