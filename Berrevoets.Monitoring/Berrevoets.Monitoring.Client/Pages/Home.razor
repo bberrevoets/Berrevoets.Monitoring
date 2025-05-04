@@ -88,9 +88,9 @@ else
                 </div>
                 <div class="card-body">
                     <div class="quick-links">
-                        <a href="https://example.com" target="_blank" class="btn btn-primary btn-block mb-2">Example Website</a>
-                        <a href="https://anotherexample.com" target="_blank" class="btn btn-secondary btn-block mb-2">Another Example</a>
-                        <a href="https://yetanotherexample.com" target="_blank" class="btn btn-info btn-block">Yet Another Example</a>
+                        <a href="https://example.com" target="_blank" class="btn btn-primary w-100 mb-2">Example Website</a>
+                        <a href="https://anotherexample.com" target="_blank" class="btn btn-secondary w-100 mb-2">Another Example</a>
+                        <a href="https://yetanotherexample.com" target="_blank" class="btn btn-info w-100">Yet Another Example</a>
                     </div>
                 </div>
             </div>
@@ -179,22 +179,11 @@ else
         });
     }
 
-    private string GetStatusClass(string status)
-    {
-        return status switch
-        {
-            "Healthy" => "bg-success",
-            "Unhealthy" => "bg-danger",
-            "Degraded" => "bg-warning",
-            "Error" => "bg-danger",
-            _ => "bg-secondary"
-        };
-    }
-
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         // Unsubscribe from events when the component is disposed
         HubService.OnEnvironmentUpdated -= HandleEnvironmentUpdated;
+        return ValueTask.CompletedTask;
     }
 
 }
