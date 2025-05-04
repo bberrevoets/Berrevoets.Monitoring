@@ -1,15 +1,16 @@
 using Berrevoets.Monitoring;
+using Berrevoets.Monitoring.Client.Services;
 using Berrevoets.Monitoring.Components;
 using Berrevoets.Monitoring.Entities;
-using Berrevoets.Monitoring.Entities.DTO;
+using Berrevoets.Monitoring.Extensions;
 using Berrevoets.Monitoring.HUB;
 using Berrevoets.Monitoring.Services;
-using Microsoft.EntityFrameworkCore;
+using _Imports = Berrevoets.Monitoring.Client._Imports;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddJsonFile("appsettings.json", false, true);
+builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", true, true);
 
 builder.Services.Configure<HealthCheckSettings>(
     builder.Configuration.GetSection("HealthCheckService"));
@@ -19,7 +20,7 @@ builder.AddServiceDefaults();
 builder.AddSqlServerDbContext<HealthConfigDbContext>("health-config");
 
 builder.Services.AddSignalR(options => { options.EnableDetailedErrors = true; });
-builder.Services.AddScoped<Berrevoets.Monitoring.Client.Services.MonitoringHubService>();
+builder.Services.AddScoped<MonitoringHubService>();
 
 builder.Services.AddCors(options =>
 {
@@ -47,40 +48,8 @@ app.UseCors("CorsPolicy");
 
 app.MapHub<MonitorHub>("/monitorHub");
 
-app.MapGet("/see_all", async (HealthConfigDbContext db) =>
-{
-    var all = await db.MonitoredEnvironments
-        .Include(env => env.Applications)
-        .Select(env => new MonitoredEnvironmentDto
-        {
-            Id = env.Id,
-            Name = env.Name,
-            IsActive = env.IsActive,
-            LastUpdated = env.LastUpdated,
-            OrderNumber = env.OrderNumber,
-            Applications = env.Applications.Select(application => new MonitoredApplicationDto
-                {
-                    Id = application.Id,
-                    Name = application.Name,
-                    Description = application.Description,
-                    HealthEndpoint = application.HealthEndpoint,
-                    IsActive = application.IsActive,
-                    Status = application.Status,
-                    StatusMessage = application.StatusMessage,
-                    LastUpdated = application.LastUpdated,
-                    SwaggerUrl = application.SwaggerUrl
-                })
-                .ToList()
-        })
-        .ToListAsync();
-
-    // Replace the existing ordering with the new logic
-    var orderedAll = all
-        .OrderBy(env => env.OrderNumber)
-        .ToList();
-
-    return orderedAll;
-});
+app.MapEnvironmentEndpoints();
+app.MapApplicationEndpoints();
 
 app.MapDefaultEndpoints();
 
@@ -104,6 +73,6 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(Berrevoets.Monitoring.Client._Imports).Assembly);
+    .AddAdditionalAssemblies(typeof(_Imports).Assembly);
 
 app.Run();
