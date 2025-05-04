@@ -1,9 +1,10 @@
-.environment-column {
-    margin-bottom: 20px;
-    max-height: 80vh;
-    overflow-y: auto;
+/* Optional hover effect for better user experience */
+.environment-column:hover {
+    box-shadow: 0 6px 12px #000000;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Keep card styling */
 .card-header {
     background-color: #f8f9fa;
     border-bottom: 1px solid #000000;
@@ -13,7 +14,9 @@
     padding: 0.75rem 1.25rem;
 }
 
-.card-body { padding: 0.5rem; }
+.card-body {
+    padding: 0.5rem;
+}
 
 .quick-links a {
     border-radius: 0.25rem;
@@ -26,3 +29,19 @@
 }
 
 .quick-links a:last-child { margin-bottom: 0; }
+
+[data-bs-theme="dark"] .environment-column {
+    box-shadow: 0 4px 6px #000000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme="dark"] .environment-column:hover {
+    box-shadow: 0 6px 12px #000000;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-bs-theme="dark"] .card-header {
+    background-color: #343a40;
+    border-bottom: 1px solid #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
