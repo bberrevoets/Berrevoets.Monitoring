@@ -10,5 +10,6 @@ public class MonitoredEnvironment
     public string Name { get; set; } = string.Empty;
 
     public bool IsActive { get; set; }
+    public DateTime LastUpdated { get; set; }
     public List<MonitoredApplication> Applications { get; set; } = new();
 }
