@@ -1,7 +1,7 @@
 ﻿@* IconComponent.razor *@
 @namespace Berrevoets.Monitoring.Client.Components
 
-@((MarkupString)IconWithSize)
+<span @attributes="AdditionalAttributes">@((MarkupString)IconWithSize)</span>
 
 @code {
 
@@ -10,6 +10,9 @@
 
     [Parameter]
     public int Size { get; set; } = 16;
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string IconWithSize => Icon
         .Replace("width=\"16\" height=\"16\"", $"width=\"{Size}\" height=\"{Size}\"");

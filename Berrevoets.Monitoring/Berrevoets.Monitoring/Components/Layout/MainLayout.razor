@@ -1,4 +1,6 @@
-﻿@inherits LayoutComponentBase
+﻿@inject ThemeService ThemeService
+@using Berrevoets.Monitoring.Client.Services
+@inherits LayoutComponentBase
 
 <div class="page">
     <div class="sidebar">
@@ -21,3 +23,17 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code
+{
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await ThemeService.InitializeThemeAsync();
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}

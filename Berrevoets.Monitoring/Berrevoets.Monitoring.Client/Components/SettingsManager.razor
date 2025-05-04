@@ -1,6 +1,8 @@
-﻿@using BootstrapIconsForDotNet
+﻿@using Berrevoets.Monitoring.Client.Services
+@using BootstrapIconsForDotNet
 @using JetBrains.Annotations
 @inject IJSRuntime JsRuntime
+@inject ThemeService ThemeService
 
 <h2 class="mb-4">Monitoring Settings</h2>
 
@@ -20,6 +22,8 @@
                         @(_isDarkMode ? "Dark Mode" : "Light Mode")
                     </label>
                 </div>
+
+                <!-- Rest of your UI remains the same -->
 
                 <h6>Refresh Rate</h6>
                 <select class="form-select mb-3" @bind="_clientRefreshRate">
@@ -48,8 +52,14 @@
         </div>
 
         <div class="alert alert-info mt-4">
-            <IconComponent Icon="@Icons.INFO_CIRCLE" Size="20"/>
-            <span class="ms-2">Server-side settings management is coming soon.</span>
+            <div>
+                <IconComponent Icon="@Icons.INFO_CIRCLE" Size="20"/>
+                <span class="ms-2">Server-side settings management is coming soon.</span>
+            </div>
+            <div>
+                <IconComponent Icon="@Icons.INFO_SQUARE" Size="20"/>
+                <span class="ms-2">Dark mode is still in Development.</span>
+            </div>
         </div>
     </div>
 </div>
@@ -72,18 +82,10 @@
     {
         try
         {
-            // Load from browser's localStorage
-            var darkModeValue = await JsRuntime.InvokeAsync<string>("localStorage.getItem", "darkMode");
-            _isDarkMode = darkModeValue == "true";
+            _isDarkMode = ThemeService.IsDarkMode;
 
             var refreshRate = await JsRuntime.InvokeAsync<string>("localStorage.getItem", "refreshRate");
             _clientRefreshRate = string.IsNullOrEmpty(refreshRate) ? 0 : int.Parse(refreshRate);
-
-            // Apply dark mode if needed
-            if (_isDarkMode)
-            {
-                await JsRuntime.InvokeVoidAsync("document.body.classList.add", "dark-mode");
-            }
         }
         catch (Exception ex)
         {
@@ -96,16 +98,7 @@
         if (e.Value is bool value)
         {
             _isDarkMode = value;
-            if (_isDarkMode)
-            {
-                await JsRuntime.InvokeVoidAsync("document.body.classList.add", "dark-mode");
-            }
-            else
-            {
-                await JsRuntime.InvokeVoidAsync("document.body.classList.remove", "dark-mode");
-            }
-
-            await JsRuntime.InvokeVoidAsync("localStorage.setItem", "darkMode", _isDarkMode.ToString().ToLower());
+            await ThemeService.SetDarkMode(_isDarkMode);
         }
     }
 
