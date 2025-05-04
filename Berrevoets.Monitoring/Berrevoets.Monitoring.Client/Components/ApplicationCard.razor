@@ -1,8 +1,10 @@
 ﻿@using Berrevoets.Monitoring.Entities.DTO
+@inject IJSRuntime JsRuntime
+
 @if (Application != null)
 {
     <div class="@(Application.IsActive ? "" : "inactive-app")">
-        <div class="card">
+        <div class="card" @onclick="HandleCardClick">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="card-title mb-0">@Application.Name</div>
@@ -15,9 +17,74 @@
     </div>
 }
 
+<!-- Application Details Modal -->
+@if (_showDetails)
+{
+    <div class="modal fade show" id="applicationDetailsModal" tabindex="-1" style="display: block;"
+         aria-labelledby="applicationDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header @GetStatusClass() text-white">
+                    <h5 class="modal-title" id="applicationDetailsModalLabel">@Application!.Name</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseDetails" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <strong>Status:</strong>
+                        <span class="badge @GetStatusClass() text-white">@Application.Status</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Application.Description))
+                    {
+                        <div class="mb-3">
+                            <strong>Description:</strong>
+                            <p>@Application.Description</p>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Application.StatusMessage))
+                    {
+                        <div class="mb-3">
+                            <strong>Status Message:</strong>
+                            <p>@Application.StatusMessage</p>
+                        </div>
+                    }
+                    <div class="mb-3">
+                        <strong>Health Check Endpoint:</strong>
+                        <p class="text-break">@Application.HealthEndpoint</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Last Updated:</strong>
+                        <p>@Application.LastUpdated.ToLocalTime().ToString("F")</p>
+                    </div>
+                    <div>
+                        <strong>Application Active:</strong>
+                        <p>@(Application.IsActive ? "Yes" : "No")</p>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Application.SwaggerUrl))
+                    {
+                        <div class="mb-3">
+                            <strong>API Documentation:</strong>
+                            <div>
+                                <a href="@Application.SwaggerUrl" target="_blank" class="btn btn-outline-primary mt-2">
+                                    <IconComponent Icon="@BootstrapIconsForDotNet.Icons.BOOK" Size="24" /> Open Swagger
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseDetails">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
 @code {
     [Parameter]
     public MonitoredApplicationDto? Application { get; set; }
+
+    private bool _showDetails;
 
     private string GetStatusClass()
     {
@@ -29,5 +96,33 @@
             "Error" => "bg-danger",
             _ => "bg-secondary"
         };
+    }
+
+    private void HandleCardClick()
+    {
+        // Only show details for active applications
+        if (Application!.IsActive)
+        {
+            _showDetails = true;
+        }
+    }
+
+    private void CloseDetails()
+    {
+        _showDetails = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_showDetails)
+        {
+            // Lock the body scroll when modal is open
+            await JsRuntime.InvokeVoidAsync("document.body.classList.add", "modal-open");
+        }
+        else
+        {
+            // Unlock the body scroll when modal is closed
+            await JsRuntime.InvokeVoidAsync("document.body.classList.remove", "modal-open");
+        }
     }
 }
