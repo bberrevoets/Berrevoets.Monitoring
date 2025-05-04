@@ -1,0 +1,155 @@
+﻿@page "/"
+@inject MonitoringHubService HubService
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@using Berrevoets.Monitoring.Client.Services
+@using Berrevoets.Monitoring.Entities.DTO
+@implements IAsyncDisposable
+@rendermode InteractiveWebAssembly
+
+<PageTitle>Health Monitoring Dashboard</PageTitle>
+
+<h1>Health Monitoring Dashboard</h1>
+
+@if (!HubService.IsConnected)
+{
+    <div class="alert alert-warning">
+        <i class="oi oi-warning"></i> Connecting to server...
+    </div>
+}
+else
+{
+    <div class="alert alert-success">
+        <i class="oi oi-check"></i> Connected to monitoring service
+    </div>
+}
+
+@if (_environments.Count == 0)
+{
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <p class="text-center mt-2">Loading monitoring data...</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var env in _environments)
+        {
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3>@env.Name</h3>
+                        <span class="badge @(env.IsActive ? "bg-success" : "bg-secondary")">
+                            @(env.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var app in env.Applications)
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-header d-flex justify-content-between">
+                                            <span>@app.Name</span>
+                                            <span class="badge @GetStatusClass(app.Status)">@app.Status</span>
+                                        </div>
+                                        <div class="card-body">
+                                            <p>@app.Description</p>
+                                            @if (!string.IsNullOrEmpty(app.StatusMessage))
+                                            {
+                                                <div class="alert alert-info">
+                                                    @app.StatusMessage
+                                                </div>
+                                            }
+                                        </div>
+                                        <div class="card-footer text-muted">
+                                            Updated: @app.LastUpdated.ToString("g")
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        Last Updated: @env.LastUpdated.ToString("g")
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<MonitoredEnvironmentDto> _environments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to environment updates
+        HubService.OnEnvironmentUpdated += HandleEnvironmentUpdated;
+
+        // Connect to the SignalR hub
+        await HubService.StartConnectionAsync();
+
+        // Load initial data
+        var absoluteUrl = NavigationManager.ToAbsoluteUri("/see_all").ToString();
+        try
+        {
+            var environments = await Http.GetFromJsonAsync<List<MonitoredEnvironmentDto>>(absoluteUrl);
+            if (environments != null)
+            {
+                _environments = environments;
+                HubService.UpdateEnvironments(environments);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading initial data: {ex}");
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    private void HandleEnvironmentUpdated(List<MonitoredEnvironmentDto> environments)
+    {
+        Console.WriteLine($"HandleEnvironmentUpdated called with {environments.Count} environments");
+
+        _environments = environments;
+    
+        // In WebAssembly, we're already on the UI thread, but InvokeAsync ensures it
+        InvokeAsync(() => 
+        {
+            try
+            {
+                Console.WriteLine("Calling StateHasChanged");
+                StateHasChanged();
+                Console.WriteLine("StateHasChanged called successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error in StateHasChanged: {ex}");
+            }
+        });
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Healthy" => "bg-success",
+            "Unhealthy" => "bg-danger",
+            "Degraded" => "bg-warning",
+            "Error" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Unsubscribe from events when the component is disposed
+        HubService.OnEnvironmentUpdated -= HandleEnvironmentUpdated;
+    }
+}
+

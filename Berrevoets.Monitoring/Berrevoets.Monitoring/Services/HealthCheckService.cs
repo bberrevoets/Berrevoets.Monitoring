@@ -1,28 +1,46 @@
-﻿using Berrevoets.Monitoring.Entities;
+﻿using System.Text.Json;
+using Berrevoets.Monitoring.Entities;
 using Berrevoets.Monitoring.Entities.DTO;
 using Berrevoets.Monitoring.HUB;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Berrevoets.Monitoring.Services;
 
 public class HealthCheckService : BackgroundService
 {
+    private readonly HttpClient _httpClient;
     private readonly IHubContext<MonitorHub> _hubContext;
     private readonly ILogger<HealthCheckService> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
-    private readonly HttpClient _httpClient;
-
-    private readonly TimeSpan _checkInterval = TimeSpan.FromSeconds(30);
     private List<MonitoredEnvironment>? _previousEnvironments;
+    private readonly IOptionsMonitor<HealthCheckSettings> _settings;
+
+    // Store the change token registration so we can dispose it
+    private IDisposable? _settingsChangeRegistration;
+    private TimeSpan _checkInterval;
 
     public HealthCheckService(IHubContext<MonitorHub> hubContext,
-        ILogger<HealthCheckService> logger, IServiceScopeFactory serviceScopeFactory, HttpClient httpClient)
+        ILogger<HealthCheckService> logger, IServiceScopeFactory serviceScopeFactory, HttpClient httpClient,
+        IOptionsMonitor<HealthCheckSettings> settings)
     {
         _hubContext = hubContext;
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
         _httpClient = httpClient;
+
+        // Initial value
+        _checkInterval = TimeSpan.FromSeconds(_settings.CurrentValue.CheckIntervalSeconds);
+
+        // Register for changes
+        _settingsChangeRegistration = _settings.OnChange(UpdateCheckInterval);
+    }
+
+    private void UpdateCheckInterval(HealthCheckSettings settings)
+    {
+        _checkInterval = TimeSpan.FromSeconds(settings.CheckIntervalSeconds);
+        _logger.LogInformation("Check interval updated to {interval} seconds", settings.CheckIntervalSeconds);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -61,6 +79,9 @@ public class HealthCheckService : BackgroundService
 
         // If this is the first run, always consider it a change
         var dataChanged = _previousEnvironments == null;
+        
+        // TODO: Remove this 
+        dataChanged = true;
 
         // Create lookup dictionaries for previous state if available
         Dictionary<Guid, MonitoredEnvironment>? previousEnvLookup = null;
@@ -160,7 +181,7 @@ public class HealthCheckService : BackgroundService
                     // Try to parse as JSON first
                     try
                     {
-                        using var jsonDoc = System.Text.Json.JsonDocument.Parse(responseContent);
+                        using var jsonDoc = JsonDocument.Parse(responseContent);
 
                         // Try to extract status from common health check formats
                         if (jsonDoc.RootElement.TryGetProperty("status", out var statusElement))
@@ -176,7 +197,7 @@ public class HealthCheckService : BackgroundService
                         else
                             application.StatusMessage = null;
                     }
-                    catch (System.Text.Json.JsonException)
+                    catch (JsonException)
                     {
                         // Not valid JSON, treat as plain text status
                         application.Status = responseContent.Trim().Length > 0 ? responseContent.Trim() : "Healthy";
@@ -258,6 +279,16 @@ public class HealthCheckService : BackgroundService
                 }
             }
         }
+
+        if (dataChanged)
+            // Update all timestamps
+            foreach (var environment in environments)
+            {
+                environment.LastUpdated = DateTime.UtcNow;
+
+                foreach (var application in environment.Applications)
+                    application.LastUpdated = DateTime.UtcNow;
+            }
 
         if (dataChanged)
         {
@@ -345,5 +376,11 @@ public class HealthCheckService : BackgroundService
             .ToList();
 
         await _hubContext.Clients.All.SendAsync("ReceiveMonitoringUpdate", ordered);
+    }
+
+    public override void Dispose()
+    {
+        _settingsChangeRegistration?.Dispose();
+        base.Dispose();
     }
 }
