@@ -1,4 +1,5 @@
 ﻿using Berrevoets.Monitoring.Entities.DTO;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 
@@ -15,7 +16,12 @@ public class MonitoringHubService : IAsyncDisposable
         _navigationManager = navigationManager;
     }
 
-    public List<MonitoredEnvironmentDto> Environments { get; set; } = new();
+    public List<MonitoredEnvironmentDto> Environments
+    {
+        [UsedImplicitly]
+        get;
+        set;
+    } = new();
 
     public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
 

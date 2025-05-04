@@ -43,6 +43,7 @@ window.dragHelper = {
             false);
 
         document.addEventListener("drop",
+// ReSharper disable once UnusedParameter
             function(e) {
                 console.log("JS: Drop detected");
             });

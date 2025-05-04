@@ -1,7 +1,7 @@
 ﻿@using Berrevoets.Monitoring.Entities.DTO
 @using BootstrapIconsForDotNet
 @inject HttpClient Http
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JsRuntime
 
 <h2 class="mb-4">Application Management</h2>
 
@@ -180,21 +180,6 @@ else
         return _environments.FirstOrDefault(e => e.Id == environmentId)?.Name ?? "Unknown";
     }
 
-    private string GetStatusClass(MonitoredApplicationDto app)
-    {
-        if (!app.IsActive)
-            return "bg-secondary";
-
-        return app.Status switch
-        {
-            "Healthy" => "bg-success",
-            "Unhealthy" => "bg-danger",
-            "Degraded" => "bg-warning",
-            "Error" => "bg-danger",
-            _ => "bg-secondary"
-        };
-    }
-
     private void ShowApplicationModal(MonitoredApplicationDto? application)
     {
         if (application == null)
@@ -264,7 +249,7 @@ else
     private async Task DeleteApplication(MonitoredApplicationDto application)
     {
         // Show confirmation dialog with properly formatted parameters
-        if (!await JSRuntime.InvokeAsync<bool>("confirm", new object[]
+        if (!await JsRuntime.InvokeAsync<bool>("confirm", new object[]
                 { $"Are you sure you want to delete the application '{application.Name}'?" }))
             return;
 

@@ -63,7 +63,6 @@
 @code {
     private string _activeTab = "environments";
     private List<MonitoredEnvironmentDto> _environments = new();
-    private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -73,8 +72,6 @@
 
     private async Task RefreshEnvironments()
     {
-        _isLoading = true;
-
         try
         {
             var absoluteUrl = NavigationManager.ToAbsoluteUri("/api/environments").ToString();
@@ -87,11 +84,10 @@
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error loading data: {ex}");
+            await Console.Error.WriteLineAsync($"Error loading data: {ex}");
         }
         finally
         {
-            _isLoading = false;
             StateHasChanged();
         }
     }
