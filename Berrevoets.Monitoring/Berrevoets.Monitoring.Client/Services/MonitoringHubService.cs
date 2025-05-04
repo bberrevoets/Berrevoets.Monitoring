@@ -1,5 +1,4 @@
-﻿using System.Net.Http.Json;
-using Berrevoets.Monitoring.Entities.DTO;
+﻿using Berrevoets.Monitoring.Entities.DTO;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 
@@ -11,16 +10,22 @@ public class MonitoringHubService : IAsyncDisposable
 
     private HubConnection? _hubConnection;
 
-    public List<MonitoredEnvironmentDto> Environments { get; set; } = new();
-
-    public event Action<List<MonitoredEnvironmentDto>>? OnEnvironmentUpdated;
-
-    public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
-
     public MonitoringHubService(NavigationManager navigationManager)
     {
         _navigationManager = navigationManager;
     }
+
+    public List<MonitoredEnvironmentDto> Environments { get; set; } = new();
+
+    public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection is not null)
+            await _hubConnection.DisposeAsync();
+    }
+
+    public event Action<List<MonitoredEnvironmentDto>>? OnEnvironmentUpdated;
 
     public async Task StartConnectionAsync()
     {
@@ -78,18 +83,9 @@ public class MonitoringHubService : IAsyncDisposable
         }
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        if (_hubConnection is not null)
-        {
-            await _hubConnection.DisposeAsync();
-        }
-    }
-
     public void UpdateEnvironments(List<MonitoredEnvironmentDto> environments)
     {
         Environments = environments;
         OnEnvironmentUpdated?.Invoke(environments);
     }
-
 }

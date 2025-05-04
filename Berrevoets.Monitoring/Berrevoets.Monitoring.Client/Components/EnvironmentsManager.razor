@@ -1,0 +1,299 @@
+﻿@using Berrevoets.Monitoring.Entities.DTO
+@using BootstrapIconsForDotNet
+@inject HttpClient Http
+@inject IJSRuntime JsRuntime
+
+<h2 class="mb-4">Environment Management</h2>
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="() => ShowEnvironmentModal(null)">
+        <IconComponent Icon="@Icons.PLUS_CIRCLE" Size="18"/> Add Environment
+    </button>
+</div>
+
+@if (_environments.Count == 0)
+{
+    <div class="alert alert-info">
+        <IconComponent Icon="@Icons.INFO_CIRCLE" Size="20"/>
+        No environments found. Add an environment to get started.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Apps</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody id="sortable-environments">
+            @foreach (var env in _environments.OrderBy(e => e.OrderNumber))
+            {
+                <tr draggable="true"
+                    @ondragstart="@(() => HandleDragStart(env))"
+                    @ondragover:preventDefault
+                    @ondragenter:preventDefault
+                    @ondrop="@(() => HandleDrop(env))"
+                    @key="env.Id">
+                    <td>
+                        <div class="drag-handle me-2" style="cursor: move; display: inline-block;">
+                            <IconComponent Icon="@Icons.GRIP_VERTICAL" Size="18"/>
+                        </div>
+                        @env.Name
+                    </td>
+                    <td>
+                        <span class="badge @(env.IsActive ? "bg-success" : "bg-secondary")">
+                            @(env.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </td>
+                    <td>@env.Applications.Count</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" @onclick="() => ShowEnvironmentModal(env)">
+                            <IconComponent Icon="@Icons.PENCIL" Size="16"/>
+                        </button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteEnvironment(env)">
+                            <IconComponent Icon="@Icons.TRASH" Size="16"/>
+                        </button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    @if (_isReordering)
+    {
+        <div class="text-end mt-2">
+            <span class="text-muted me-2">Order changed. </span>
+            <button class="btn btn-sm btn-primary" @onclick="SaveReordering">
+                <IconComponent Icon="@Icons.SAVE" Size="16"/> Save Order
+            </button>
+        </div>
+    }
+}
+
+@if (_showEnvironmentModal)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_editingEnvironment?.Id == Guid.Empty ? "Add" : "Edit") Environment</h5>
+                    <button type="button" class="btn-close" @onclick="CloseEnvironmentModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="_editingEnvironment" OnValidSubmit="SaveEnvironment">
+                        <DataAnnotationsValidator/>
+                        <ValidationSummary/>
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name</label>
+                            <InputText id="name" class="form-control" @bind-Value="_editingEnvironment!.Name"/>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="order" class="form-label">Order Number</label>
+                            <InputNumber id="order" class="form-control" @bind-Value="_editingEnvironment!.OrderNumber"/>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <InputCheckbox id="active" class="form-check-input" @bind-Value="_editingEnvironment!.IsActive"/>
+                            <label class="form-check-label" for="active">
+                                Environment Active
+                            </label>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseEnvironmentModal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+
+    [Parameter]
+    public List<MonitoredEnvironmentDto> Environments { get; set; } = new();
+
+    [Parameter]
+    public EventCallback OnEnvironmentUpdated { get; set; }
+
+    private List<MonitoredEnvironmentDto> _environments => Environments;
+    private bool _showEnvironmentModal;
+    private MonitoredEnvironmentDto? _editingEnvironment;
+
+    // Drag-and-drop related fields
+    private MonitoredEnvironmentDto? _draggedEnvironment;
+    private bool _isReordering;
+
+    private void ShowEnvironmentModal(MonitoredEnvironmentDto? environment)
+    {
+        if (environment == null)
+        {
+            // Create new environment
+            _editingEnvironment = new MonitoredEnvironmentDto
+            {
+                Id = Guid.Empty,
+                Name = "",
+                OrderNumber = _environments.Count > 0 ? _environments.Max(e => e.OrderNumber) + 1 : 1,
+                IsActive = true,
+                Applications = new List<MonitoredApplicationDto>()
+            };
+        }
+        else
+        {
+            // Edit existing environment
+            _editingEnvironment = new MonitoredEnvironmentDto
+            {
+                Id = environment.Id,
+                Name = environment.Name,
+                OrderNumber = environment.OrderNumber,
+                IsActive = environment.IsActive,
+                Applications = environment.Applications
+            };
+        }
+
+        _showEnvironmentModal = true;
+    }
+
+    private void CloseEnvironmentModal()
+    {
+        _showEnvironmentModal = false;
+        _editingEnvironment = null;
+    }
+
+    private async Task SaveEnvironment()
+    {
+        if (_editingEnvironment == null) return;
+
+        try
+        {
+            if (_editingEnvironment.Id == Guid.Empty)
+            {
+                // Create new environment
+                _editingEnvironment.Id = Guid.NewGuid();
+                await Http.PostAsJsonAsync("/api/environments", _editingEnvironment);
+            }
+            else
+            {
+                // Update existing environment
+                await Http.PutAsJsonAsync($"/api/environments/{_editingEnvironment.Id}", _editingEnvironment);
+            }
+
+            await OnEnvironmentUpdated.InvokeAsync();
+            CloseEnvironmentModal();
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Error saving environment: {ex}");
+        }
+    }
+
+    private async Task DeleteEnvironment(MonitoredEnvironmentDto environment)
+    {
+        // Show confirmation dialog
+        if (!await JsRuntime.InvokeAsync<bool>("confirm", new object[] { $"Are you sure you want to delete the environment '{environment.Name}' and all its applications?" }))
+            return;
+
+        try
+        {
+            await Http.DeleteAsync($"/api/environments/{environment.Id}");
+            await OnEnvironmentUpdated.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Error deleting environment: {ex}");
+        }
+    }
+
+    private void HandleDragStart(MonitoredEnvironmentDto environment)
+    {
+        Console.WriteLine("Start Dragging environment: " + environment.Name);
+        _draggedEnvironment = environment;
+    }
+
+    private void HandleDrop(MonitoredEnvironmentDto targetEnvironment)
+    {
+        Console.WriteLine("Drop onto environment: " + targetEnvironment.Name);
+
+        if (_draggedEnvironment == null || _draggedEnvironment.Id == targetEnvironment.Id)
+        {
+            Console.WriteLine("Invalid drop operation - same item or null dragged item");
+            return;
+        }
+
+        var draggedOrder = _draggedEnvironment.OrderNumber;
+        var targetOrder = targetEnvironment.OrderNumber;
+
+        // Determine reordering direction
+        if (draggedOrder < targetOrder)
+        {
+            // Moving down - adjust all items between
+            foreach (var env in _environments.Where(e => e.OrderNumber > draggedOrder && e.OrderNumber <= targetOrder))
+            {
+                env.OrderNumber--;
+            }
+        }
+        else
+        {
+            // Moving up - adjust all items between
+            foreach (var env in _environments.Where(e => e.OrderNumber < draggedOrder && e.OrderNumber >= targetOrder))
+            {
+                env.OrderNumber++;
+            }
+        }
+
+        // Set the dragged item's new position
+        _draggedEnvironment.OrderNumber = targetOrder;
+
+        // Indicate order has been changed
+        _isReordering = true;
+
+        StateHasChanged();
+    }
+
+    private async Task SaveReordering()
+    {
+        try
+        {
+            // For each environment that was reordered
+            foreach (var env in _environments)
+            {
+                var updateDto = new MonitoredEnvironmentDto
+                {
+                    Id = env.Id,
+                    Name = env.Name,
+                    IsActive = env.IsActive,
+                    OrderNumber = env.OrderNumber
+                };
+
+                await Http.PutAsJsonAsync($"/api/environments/{env.Id}", updateDto);
+            }
+
+            _isReordering = false;
+            await OnEnvironmentUpdated.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Error saving environment order: {ex}");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JsRuntime.InvokeVoidAsync("dragHelper.initialize");
+        }
+    }
+
+}

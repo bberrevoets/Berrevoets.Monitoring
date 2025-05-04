@@ -11,4 +11,5 @@ public class MonitoredApplicationDto
     public string? StatusMessage { get; set; }
     public DateTime LastUpdated { get; set; }
     public string? SwaggerUrl { get; set; }
+    public Guid EnvironmentId { get; set; }
 }

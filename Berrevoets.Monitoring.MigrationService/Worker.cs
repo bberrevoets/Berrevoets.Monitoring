@@ -8,12 +8,11 @@ namespace Berrevoets.Monitoring.MigrationService;
 
 public class Worker : BackgroundService
 {
-    private readonly ILogger<Worker> _logger;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IHostApplicationLifetime _hostApplicationLifetime;
-
     private const string ActivitySourceName = "Migrations";
     private static readonly ActivitySource ActivitySource = new(ActivitySourceName);
+    private readonly IHostApplicationLifetime _hostApplicationLifetime;
+    private readonly ILogger<Worker> _logger;
+    private readonly IServiceProvider _serviceProvider;
 
     public Worker(ILogger<Worker> logger, IServiceProvider serviceProvider,
         IHostApplicationLifetime hostApplicationLifetime)
@@ -61,10 +60,7 @@ public class Worker : BackgroundService
     private static async Task RunMigrationAsync(HealthConfigDbContext dbContext, CancellationToken stoppingToken)
     {
         var strategy = dbContext.Database.CreateExecutionStrategy();
-        await strategy.ExecuteAsync(async () =>
-        {
-            await dbContext.Database.MigrateAsync(stoppingToken);
-        });
+        await strategy.ExecuteAsync(async () => { await dbContext.Database.MigrateAsync(stoppingToken); });
     }
 
     private static async Task SeedDataAsync(HealthConfigDbContext dbContext, CancellationToken stoppingToken)

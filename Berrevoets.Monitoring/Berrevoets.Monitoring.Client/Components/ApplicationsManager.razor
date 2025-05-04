@@ -1,0 +1,282 @@
+﻿@using Berrevoets.Monitoring.Entities.DTO
+@using BootstrapIconsForDotNet
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<h2 class="mb-4">Application Management</h2>
+
+@if (_environments.Count == 0)
+{
+    <div class="alert alert-warning">
+        <IconComponent Icon="@Icons.EXCLAMATION_TRIANGLE" Size="20"/>
+        No environments available. Please create an environment first.
+    </div>
+}
+else
+{
+    <div class="mb-3 d-flex">
+        <div class="me-auto">
+            <button class="btn btn-primary" @onclick="() => ShowApplicationModal(null)">
+                <IconComponent Icon="@Icons.PLUS_CIRCLE" Size="18"/> Add Application
+            </button>
+        </div>
+
+        <div class="form-group">
+            <select class="form-select" @bind="_selectedEnvironmentId">
+                <option value="">All Environments</option>
+                @foreach (var env in _environments)
+                {
+                    <option value="@env.Id">@env.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Environment</th>
+                <th>Health Endpoint</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var app in GetFilteredApplications())
+            {
+                <tr>
+                    <td>@app.Name</td>
+                    <td>@GetEnvironmentName(app.EnvironmentId)</td>
+                    <td class="text-truncate" style="max-width: 200px;">
+                        <span title="@app.HealthEndpoint">@app.HealthEndpoint</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" @onclick="() => ShowApplicationModal(app)">
+                            <IconComponent Icon="@Icons.PENCIL" Size="16"/>
+                        </button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteApplication(app)">
+                            <IconComponent Icon="@Icons.TRASH" Size="16"/>
+                        </button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (_showApplicationModal)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_editingApplication?.Id == Guid.Empty ? "Add" : "Edit") Application</h5>
+                    <button type="button" class="btn-close" @onclick="CloseApplicationModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="_editingApplication" OnValidSubmit="SaveApplication">
+                        <DataAnnotationsValidator/>
+                        <ValidationSummary/>
+
+                        <div class="mb-3">
+                            <label for="envId" class="form-label">Environment</label>
+                            <select id="envId" class="form-select" @bind="_editingApplication!.EnvironmentId">
+                                @foreach (var env in _environments)
+                                {
+                                    <option value="@env.Id">@env.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="appName" class="form-label">Name</label>
+                            <InputText id="appName" class="form-control" @bind-Value="_editingApplication!.Name"/>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <InputTextArea id="description" class="form-control" rows="3" @bind-Value="_editingApplication!.Description"/>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="healthEndpoint" class="form-label">Health Endpoint URL</label>
+                            <InputText id="healthEndpoint" class="form-control" @bind-Value="_editingApplication!.HealthEndpoint"/>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="swaggerUrl" class="form-label">Swagger URL (optional)</label>
+                            <InputText id="swaggerUrl" class="form-control" @bind-Value="_editingApplication!.SwaggerUrl"/>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <InputCheckbox id="appActive" class="form-check-input" @bind-Value="_editingApplication!.IsActive"/>
+                            <label class="form-check-label" for="appActive">
+                                Application Active
+                            </label>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseApplicationModal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+
+    [Parameter]
+    public List<MonitoredEnvironmentDto> Environments { get; set; } = new();
+
+    [Parameter]
+    public EventCallback OnApplicationUpdated { get; set; }
+
+    private List<MonitoredEnvironmentDto> _environments => Environments;
+    private bool _showApplicationModal;
+    private MonitoredApplicationDto? _editingApplication;
+    private string? _selectedEnvironmentId;
+
+    private List<MonitoredApplicationDto> GetFilteredApplications()
+    {
+        var applications = new List<MonitoredApplicationDto>();
+
+        foreach (var env in _environments)
+        {
+            if (string.IsNullOrEmpty(_selectedEnvironmentId) ||
+                env.Id.ToString() == _selectedEnvironmentId)
+            {
+                foreach (var app in env.Applications)
+                {
+                    // Create a new instance with environment ID attached
+                    var appWithEnv = new MonitoredApplicationDto
+                    {
+                        Id = app.Id,
+                        Name = app.Name,
+                        Description = app.Description,
+                        HealthEndpoint = app.HealthEndpoint,
+                        Status = app.Status,
+                        StatusMessage = app.StatusMessage,
+                        IsActive = app.IsActive,
+                        LastUpdated = app.LastUpdated,
+                        SwaggerUrl = app.SwaggerUrl,
+                        EnvironmentId = env.Id
+                    };
+                    applications.Add(appWithEnv);
+                }
+            }
+        }
+
+        return applications;
+    }
+
+    private string GetEnvironmentName(Guid environmentId)
+    {
+        return _environments.FirstOrDefault(e => e.Id == environmentId)?.Name ?? "Unknown";
+    }
+
+    private string GetStatusClass(MonitoredApplicationDto app)
+    {
+        if (!app.IsActive)
+            return "bg-secondary";
+
+        return app.Status switch
+        {
+            "Healthy" => "bg-success",
+            "Unhealthy" => "bg-danger",
+            "Degraded" => "bg-warning",
+            "Error" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private void ShowApplicationModal(MonitoredApplicationDto? application)
+    {
+        if (application == null)
+        {
+            // Create new application
+            _editingApplication = new MonitoredApplicationDto
+            {
+                Id = Guid.Empty,
+                Name = "",
+                Description = "",
+                HealthEndpoint = "https://",
+                EnvironmentId = _environments.FirstOrDefault()?.Id ?? Guid.Empty, // Default to first environment
+                IsActive = true
+            };
+        }
+        else
+        {
+            // Edit existing application
+            _editingApplication = new MonitoredApplicationDto
+            {
+                Id = application.Id,
+                Name = application.Name,
+                Description = application.Description,
+                HealthEndpoint = application.HealthEndpoint,
+                SwaggerUrl = application.SwaggerUrl,
+                EnvironmentId = application.EnvironmentId,
+                IsActive = application.IsActive
+            };
+        }
+
+        _showApplicationModal = true;
+    }
+
+    private void CloseApplicationModal()
+    {
+        _showApplicationModal = false;
+        _editingApplication = null;
+    }
+
+    private async Task SaveApplication()
+    {
+        if (_editingApplication == null) return;
+
+        try
+        {
+            if (_editingApplication.Id == Guid.Empty)
+            {
+                // Create new application
+                _editingApplication.Id = Guid.NewGuid();
+                await Http.PostAsJsonAsync("/api/applications", _editingApplication);
+            }
+            else
+            {
+                // Update existing application
+                await Http.PutAsJsonAsync($"/api/applications/{_editingApplication.Id}", _editingApplication);
+            }
+
+            await OnApplicationUpdated.InvokeAsync();
+            CloseApplicationModal();
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Error saving application: {ex}");
+        }
+    }
+
+    private async Task DeleteApplication(MonitoredApplicationDto application)
+    {
+        // Show confirmation dialog with properly formatted parameters
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", new object[]
+                { $"Are you sure you want to delete the application '{application.Name}'?" }))
+            return;
+
+        try
+        {
+            await Http.DeleteAsync($"/api/applications/{application.Id}");
+            await OnApplicationUpdated.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Error deleting application: {ex}");
+        }
+    }
+
+}

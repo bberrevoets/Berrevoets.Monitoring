@@ -4,6 +4,7 @@
 @((MarkupString)IconWithSize)
 
 @code {
+
     [Parameter]
     public string Icon { get; set; } = string.Empty;
 
@@ -12,4 +13,5 @@
 
     private string IconWithSize => Icon
         .Replace("width=\"16\" height=\"16\"", $"width=\"{Size}\" height=\"{Size}\"");
+
 }
