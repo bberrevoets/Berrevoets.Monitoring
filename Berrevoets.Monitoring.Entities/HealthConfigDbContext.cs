@@ -19,6 +19,14 @@ public class HealthConfigDbContext : DbContext
             .WithMany(env => env.Applications)
             .HasForeignKey(app => app.EnvironmentId);
 
+        modelBuilder.Entity<MonitoredEnvironment>()
+            .Property(e => e.LastUpdated)
+            .HasDefaultValueSql("GETUTCDATE()");
+
+        modelBuilder.Entity<MonitoredApplication>()
+            .Property(e => e.LastUpdated)
+            .HasDefaultValueSql("GETUTCDATE()");
+
         base.OnModelCreating(modelBuilder);
     }
 }
