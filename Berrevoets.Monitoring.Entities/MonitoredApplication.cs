@@ -24,4 +24,6 @@ public class MonitoredApplication
 
     [MaxLength(2048)]
     public string? StatusMessage { get; set; }
+
+    public DateTime LastUpdated { get; set; }
 }
