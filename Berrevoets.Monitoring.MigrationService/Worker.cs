@@ -74,6 +74,7 @@ public class Worker : BackgroundService
             Id = Guid.NewGuid(),
             Name = "Development",
             IsActive = true,
+            OrderNumber = 1,
             Applications =
             [
                 new MonitoredApplication
@@ -107,7 +108,8 @@ public class Worker : BackgroundService
         {
             Id = Guid.NewGuid(),
             Name = "Acceptation",
-            IsActive = true,
+            OrderNumber = 2,
+            IsActive = false,
             Applications =
             [
                 new MonitoredApplication
@@ -116,6 +118,22 @@ public class Worker : BackgroundService
                     Name = "Sample Application",
                     Description = "A sample application for monitoring.",
                     HealthEndpoint = "https://run.mocky.io/v3/b3361eec-d30f-4078-87f2-d4c89cee4858",
+                    IsActive = true
+                },
+                new MonitoredApplication
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Sample Application",
+                    Description = "A sample application for monitoring.",
+                    HealthEndpoint = "https://run.mocky.io/v3/4a82791c-c38f-49b8-a4a4-259652f0da4e",
+                    IsActive = false
+                },
+                new MonitoredApplication
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Sample Application",
+                    Description = "A sample application for monitoring.",
+                    HealthEndpoint = "https://run.mocky.io/v3/263cac1e-50a9-4a64-b8c5-3f52dc46deb4",
                     IsActive = true
                 }
             ]
@@ -126,6 +144,7 @@ public class Worker : BackgroundService
             Id = Guid.NewGuid(),
             Name = "Routevision",
             IsActive = true,
+            OrderNumber = 3,
             Applications =
             [
                 new MonitoredApplication
@@ -133,7 +152,23 @@ public class Worker : BackgroundService
                     Id = Guid.NewGuid(),
                     Name = "Sample Application",
                     Description = "A sample application for monitoring.",
+                    HealthEndpoint = "https://run.mocky.io/v3/b3361eec-d30f-4078-87f2-d4c89cee4858",
+                    IsActive = true
+                },
+                new MonitoredApplication
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Sample Application",
+                    Description = "A sample application for monitoring.",
                     HealthEndpoint = "https://run.mocky.io/v3/4a82791c-c38f-49b8-a4a4-259652f0da4e",
+                    IsActive = false
+                },
+                new MonitoredApplication
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Sample Application",
+                    Description = "A sample application for monitoring.",
+                    HealthEndpoint = "https://run.mocky.io/v3/263cac1e-50a9-4a64-b8c5-3f52dc46deb4",
                     IsActive = true
                 }
             ]
@@ -144,6 +179,7 @@ public class Worker : BackgroundService
             Id = Guid.NewGuid(),
             Name = "Fleetfinder",
             IsActive = true,
+            OrderNumber = 4,
             Applications =
             [
                 new MonitoredApplication
@@ -151,8 +187,24 @@ public class Worker : BackgroundService
                     Id = Guid.NewGuid(),
                     Name = "Sample Application",
                     Description = "A sample application for monitoring.",
-                    HealthEndpoint = "https://run.mocky.io/v3/263cac1e-50a9-4a64-b8c5-3f52dc46deb4",
+                    HealthEndpoint = "https://run.mocky.io/v3/b3361eec-d30f-4078-87f2-d4c89cee4858",
                     IsActive = true
+                },
+                new MonitoredApplication
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Sample Application",
+                    Description = "A sample application for monitoring.",
+                    HealthEndpoint = "https://run.mocky.io/v3/4a82791c-c38f-49b8-a4a4-259652f0da4e",
+                    IsActive = true
+                },
+                new MonitoredApplication
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Sample Application",
+                    Description = "A sample application for monitoring.",
+                    HealthEndpoint = "https://run.mocky.io/v3/263cac1e-50a9-4a64-b8c5-3f52dc46deb4",
+                    IsActive = false
                 }
             ]
         };

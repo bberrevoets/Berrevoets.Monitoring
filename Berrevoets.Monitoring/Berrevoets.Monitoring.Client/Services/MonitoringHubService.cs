@@ -86,27 +86,6 @@ public class MonitoringHubService : IAsyncDisposable
         }
     }
 
-    public async Task LoadInitialDataAsync(HttpClient httpClient)
-    {
-        try
-        {
-            var requestUrl = httpClient.BaseAddress != null ?
-                new Uri(httpClient.BaseAddress, "see_all").ToString() :
-                "/see_all";
-            
-            var environments = await httpClient.GetFromJsonAsync<List<MonitoredEnvironmentDto>>(requestUrl);
-            if (environments != null)
-            {
-                Environments = environments;
-                OnEnvironmentUpdated?.Invoke(environments);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine("Error loading initial data: {0}", ex);
-        }
-    }
-
     public void UpdateEnvironments(List<MonitoredEnvironmentDto> environments)
     {
         Environments = environments;

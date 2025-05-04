@@ -89,6 +89,9 @@ namespace Berrevoets.Monitoring.Entities.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("MonitoredEnvironments");

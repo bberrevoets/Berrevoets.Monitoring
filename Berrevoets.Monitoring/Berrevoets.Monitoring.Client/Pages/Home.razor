@@ -38,30 +38,50 @@ else
 else
 {
     <div class="row">
-        @foreach (var environment in _environments)
+        @{
+            var activeEnvironments = _environments.Where(e => e.IsActive).ToList();
+        }
+
+        @if (activeEnvironments.Count == 0)
         {
-            <div class="col-md-3">
-                <div class="card mb-4>">
+            <div class="col-md">
+                <div class="card h-100">
                     <div class="card-header bg-light">
-                        <h4>@environment.Name</h4>
+                        <h4>No Active Environments</h4>
                     </div>
                     <div class="card-body">
-                        @foreach (var application in environment.Applications)
-                        {
-                            <ApplicationCard Application="application"/>
-                        }
-                        @if (!environment.Applications.Any())
-                        {
-                            <p class="text-muted">No Applications in this environment.</p>
-                        }
+                        <p class="text-muted">There are no active environments to display.</p>
                     </div>
                 </div>
             </div>
         }
+        else
+        {
+            @foreach (var environment in activeEnvironments)
+            {
+                <div class="col-md">
+                    <div class="card h-100">
+                        <div class="card-header bg-light">
+                            <h4>@environment.Name</h4>
+                        </div>
+                        <div class="card-body">
+                            @foreach (var application in environment.Applications)
+                            {
+                                <ApplicationCard Application="application"/>
+                            }
+                            @if (!environment.Applications.Any())
+                            {
+                                <p class="text-muted">No Applications in this environment.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
 
         <!-- Last column for external links -->
-        <div class="col-md-3 environment-column">
-            <div class="card">
+        <div class="col-md">
+            <div class="card h-100">
                 <div class="card-header">
                     <h4>Quick Links</h4>
                 </div>
@@ -97,16 +117,42 @@ else
             var environments = await Http.GetFromJsonAsync<List<MonitoredEnvironmentDto>>(absoluteUrl);
             if (environments != null)
             {
-                _environments = environments;
-                HubService.UpdateEnvironments(environments);
+                // Apply the same ordering as in the server's NotifyClientsAsync method
+                foreach (var env in environments)
+                {
+                    env.Applications = env.Applications
+                        .OrderBy(app => GetStatusPriority(app.Status))
+                        .ThenBy(app => app.IsActive ? 0 : 1)
+                        .ToList();
+                }
+
+                // Order environments by OrderNumber
+                _environments = environments
+                    .OrderBy(env => env.OrderNumber)
+                    .ToList();
+                
+                HubService.UpdateEnvironments(_environments);
             }
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error loading initial data: {ex}");
+            await Console.Error.WriteLineAsync($"Error loading initial data: {ex}");
         }
 
         await base.OnInitializedAsync();
+    }
+
+    // Helper method to determine status priority for sorting
+    private int GetStatusPriority(string status)
+    {
+        return status switch
+        {
+            "Unhealthy" => 0,
+            "Error" => 1,
+            "Degraded" => 2,
+            "Healthy" => 3,
+            _ => 4
+        };
     }
 
     private void HandleEnvironmentUpdated(List<MonitoredEnvironmentDto> environments)
