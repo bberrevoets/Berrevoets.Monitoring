@@ -5,6 +5,7 @@
 @using Berrevoets.Monitoring.Client.Components
 @using Berrevoets.Monitoring.Client.Services
 @using Berrevoets.Monitoring.Entities.DTO
+@using BootstrapIconsForDotNet
 @implements IAsyncDisposable 
 @rendermode InteractiveWebAssembly
 
@@ -15,13 +16,13 @@
 @if (!HubService.IsConnected)
 {
     <div class="alert alert-warning">
-        <IconComponent Icon="@BootstrapIconsForDotNet.Icons.ALARM" Size="24" /> Connecting to server...
+        <IconComponent Icon="@Icons.ALARM" Size="24"/> Connecting to server...
     </div>
 }
 else
 {
     <div class="alert alert-success">
-        <IconComponent Icon="@BootstrapIconsForDotNet.Icons.CHECK" Size="24" /> Connected to monitoring service
+        <IconComponent Icon="@Icons.CHECK" Size="24"/> Connected to monitoring service
         <p>Display last updated on: @(_lastUpdated.ToLocalTime().ToString("F"))</p>
     </div>
 }
@@ -111,7 +112,7 @@ else
         await HubService.StartConnectionAsync();
 
         // Load initial data
-        var absoluteUrl = NavigationManager.ToAbsoluteUri("/see_all").ToString();
+        var absoluteUrl = NavigationManager.ToAbsoluteUri("/api/environments").ToString();
         try
         {
             var environments = await Http.GetFromJsonAsync<List<MonitoredEnvironmentDto>>(absoluteUrl);
@@ -130,7 +131,7 @@ else
                 _environments = environments
                     .OrderBy(env => env.OrderNumber)
                     .ToList();
-                
+
                 HubService.UpdateEnvironments(_environments);
             }
         }

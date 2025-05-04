@@ -1,4 +1,4 @@
-using k8s.Models;
+using Projects;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -10,16 +10,16 @@ var sqlServer = builder.AddSqlServer("sqlserver", password, 1433)
 
 var db = sqlServer.AddDatabase("health-config");
 
-builder.AddProject<Projects.Berrevoets_Monitoring_MigrationService>("berrevoets-monitoring-migrationservice")
+builder.AddProject<Berrevoets_Monitoring_MigrationService>("berrevoets-monitoring-migrationservice")
     .WithReference(db)
     .WaitFor(db)
     .WithParentRelationship(sqlServer);
 
-var monitoring = builder.AddProject<Projects.Berrevoets_Monitoring>("berrevoets-monitoring")
+var monitoring = builder.AddProject<Berrevoets_Monitoring>("berrevoets-monitoring")
     .WithReference(db)
     .WaitFor(db)
     .WithExternalHttpEndpoints();
 
-monitoring.WithUrl($"{monitoring.GetEndpoint("https")}/see_all", "See all");
+monitoring.WithUrl($"{monitoring.GetEndpoint("https")}/api/environments", "See all");
 
 builder.Build().Run();

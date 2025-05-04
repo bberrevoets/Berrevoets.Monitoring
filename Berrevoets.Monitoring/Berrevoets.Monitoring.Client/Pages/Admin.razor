@@ -1,0 +1,99 @@
+﻿@page "/admin"
+@using Berrevoets.Monitoring.Client.Components
+@using Berrevoets.Monitoring.Entities.DTO
+@using BootstrapIconsForDotNet
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode InteractiveWebAssembly
+
+<PageTitle>Monitoring Admin</PageTitle>
+
+<div class="container-fluid">
+    <h1 class="mb-4">
+        <IconComponent Icon="@Icons.GEAR" Size="28"/>
+        Monitoring Administration
+    </h1>
+
+    <div class="row">
+        <!-- Navigation sidebar -->
+        <div class="list-group">
+            <a class="list-group-item list-group-item-action @(_activeTab == "environments" ? "active" : "")"
+               @onclick='() => _activeTab = "environments"'>
+                <IconComponent Icon="@Icons.COLLECTION" Size="18"/>
+                Environments
+            </a>
+            <a class="list-group-item list-group-item-action @(_activeTab == "applications" ? "active" : "")"
+               @onclick='() => _activeTab = "applications"'>
+                <IconComponent Icon="@Icons.APP" Size="18"/>
+                Applications
+            </a>
+            <a class="list-group-item list-group-item-action @(_activeTab == "settings" ? "active" : "")"
+               @onclick='() => _activeTab = "settings"'>
+                <IconComponent Icon="@Icons.SLIDERS" Size="18"/>
+                Settings
+            </a>
+        </div>
+
+
+        <!-- Main content area -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    @switch (_activeTab)
+                    {
+                        case "environments":
+                            <EnvironmentsManager Environments="_environments" OnEnvironmentUpdated="RefreshEnvironments"/>
+                            break;
+                        case "applications":
+                            <ApplicationsManager Environments="_environments" OnApplicationUpdated="RefreshEnvironments"/>
+                            break;
+                        case "settings":
+                            <SettingsManager/>
+                            break;
+                        default:
+                            <p>Select an option from the sidebar</p>
+                            break;
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string _activeTab = "environments";
+    private List<MonitoredEnvironmentDto> _environments = new();
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshEnvironments();
+        await base.OnInitializedAsync();
+    }
+
+    private async Task RefreshEnvironments()
+    {
+        _isLoading = true;
+
+        try
+        {
+            var absoluteUrl = NavigationManager.ToAbsoluteUri("/api/environments").ToString();
+            var environments = await Http.GetFromJsonAsync<List<MonitoredEnvironmentDto>>(absoluteUrl);
+
+            if (environments != null)
+            {
+                _environments = environments;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading data: {ex}");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+}

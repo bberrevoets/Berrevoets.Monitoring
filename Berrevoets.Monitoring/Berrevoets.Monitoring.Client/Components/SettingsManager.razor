@@ -1,0 +1,129 @@
+﻿@using BootstrapIconsForDotNet
+@inject IJSRuntime JsRuntime
+
+<h2 class="mb-4">Monitoring Settings</h2>
+
+<div class="row">
+    <!-- Remove server-side settings or use client storage temporarily -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Display Settings</h5>
+                <span class="badge bg-info">Client</span>
+            </div>
+            <div class="card-body">
+                <h6>Theme</h6>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="darkModeSwitch" @onchange="ToggleDarkMode" checked="@_isDarkMode">
+                    <label class="form-check-label" for="darkModeSwitch">
+                        @(_isDarkMode ? "Dark Mode" : "Light Mode")
+                    </label>
+                </div>
+
+                <h6>Refresh Rate</h6>
+                <select class="form-select mb-3" @bind="_clientRefreshRate">
+                    <option value="0">Real-time only</option>
+                    <option value="5">Every 5 seconds</option>
+                    <option value="10">Every 10 seconds</option>
+                    <option value="30">Every 30 seconds</option>
+                    <option value="60">Every minute</option>
+                </select>
+
+                <button class="btn btn-primary" @onclick="SaveClientSettings">
+                    <IconComponent Icon="@Icons.SAVE" Size="16"/>
+                    Save Display Settings
+                </button>
+
+                @if (_showSaveSuccess)
+                {
+                    <div class="alert alert-success mt-3 d-flex align-items-center">
+                        <IconComponent Icon="@Icons.CHECK_CIRCLE" Size="20"/>
+                        <div class="ms-2">
+                            Settings saved successfully!
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-4">
+            <IconComponent Icon="@Icons.INFO_CIRCLE" Size="20"/>
+            <span class="ms-2">Server-side settings management is coming soon.</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _showSaveSuccess;
+    private string? _saveError;
+    private bool _isDarkMode;
+    private int _clientRefreshRate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClientPreferences();
+    }
+
+    private async Task LoadClientPreferences()
+    {
+        try
+        {
+            // Load from browser's localStorage
+            var darkModeValue = await JsRuntime.InvokeAsync<string>("localStorage.getItem", "darkMode");
+            _isDarkMode = darkModeValue == "true";
+
+            var refreshRate = await JsRuntime.InvokeAsync<string>("localStorage.getItem", "refreshRate");
+            _clientRefreshRate = string.IsNullOrEmpty(refreshRate) ? 0 : int.Parse(refreshRate);
+
+            // Apply dark mode if needed
+            if (_isDarkMode)
+            {
+                await JsRuntime.InvokeVoidAsync("document.body.classList.add", "dark-mode");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading client preferences: {ex}");
+        }
+    }
+
+    private async Task ToggleDarkMode(ChangeEventArgs e)
+    {
+        if (e.Value is bool value)
+        {
+            _isDarkMode = value;
+            if (_isDarkMode)
+            {
+                await JsRuntime.InvokeVoidAsync("document.body.classList.add", "dark-mode");
+            }
+            else
+            {
+                await JsRuntime.InvokeVoidAsync("document.body.classList.remove", "dark-mode");
+            }
+
+            await JsRuntime.InvokeVoidAsync("localStorage.setItem", "darkMode", _isDarkMode.ToString().ToLower());
+        }
+    }
+
+    private async Task SaveClientSettings()
+    {
+        try
+        {
+            await JsRuntime.InvokeVoidAsync("localStorage.setItem", "refreshRate", _clientRefreshRate.ToString());
+            _showSaveSuccess = true;
+
+            // Auto-hide success message after 3 seconds
+            _ = Task.Delay(3000).ContinueWith(_ =>
+            {
+                _showSaveSuccess = false;
+                InvokeAsync(StateHasChanged);
+            });
+        }
+        catch (Exception ex)
+        {
+            _saveError = ex.Message;
+            Console.Error.WriteLine($"Error saving client settings: {ex}");
+        }
+    }
+
+}

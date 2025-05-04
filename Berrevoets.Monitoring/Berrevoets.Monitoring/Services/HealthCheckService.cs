@@ -389,7 +389,8 @@ public class HealthCheckService : BackgroundService
                     Status = app.Status,
                     StatusMessage = app.StatusMessage,
                     LastUpdated = app.LastUpdated,
-                    SwaggerUrl = app.SwaggerUrl
+                    SwaggerUrl = app.SwaggerUrl,
+                    EnvironmentId = env.Id
                 }).OrderBy(app => Helpers.GetStatusPriority(app.Status))
                 .ThenBy(app => app.IsActive ? 0 : 1)
                 .ToList()
