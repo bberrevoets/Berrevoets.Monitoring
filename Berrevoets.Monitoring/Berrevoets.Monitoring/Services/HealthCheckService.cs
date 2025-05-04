@@ -10,23 +10,37 @@ namespace Berrevoets.Monitoring.Services;
 
 public class HealthCheckService : BackgroundService
 {
-    private readonly TimeSpan _checkInterval;
     private readonly HttpClient _httpClient;
     private readonly IHubContext<MonitorHub> _hubContext;
     private readonly ILogger<HealthCheckService> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private List<MonitoredEnvironment>? _previousEnvironments;
+    private readonly IOptionsMonitor<HealthCheckSettings> _settings;
+
+    // Store the change token registration so we can dispose it
+    private IDisposable? _settingsChangeRegistration;
+    private TimeSpan _checkInterval;
 
     public HealthCheckService(IHubContext<MonitorHub> hubContext,
         ILogger<HealthCheckService> logger, IServiceScopeFactory serviceScopeFactory, HttpClient httpClient,
-        IOptions<HealthCheckSettings> settings)
+        IOptionsMonitor<HealthCheckSettings> settings)
     {
         _hubContext = hubContext;
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
         _httpClient = httpClient;
 
-        _checkInterval = TimeSpan.FromSeconds(settings.Value.CheckIntervalSeconds);
+        // Initial value
+        _checkInterval = TimeSpan.FromSeconds(_settings.CurrentValue.CheckIntervalSeconds);
+
+        // Register for changes
+        _settingsChangeRegistration = _settings.OnChange(UpdateCheckInterval);
+    }
+
+    private void UpdateCheckInterval(HealthCheckSettings settings)
+    {
+        _checkInterval = TimeSpan.FromSeconds(settings.CheckIntervalSeconds);
+        _logger.LogInformation("Check interval updated to {interval} seconds", settings.CheckIntervalSeconds);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -362,5 +376,11 @@ public class HealthCheckService : BackgroundService
             .ToList();
 
         await _hubContext.Clients.All.SendAsync("ReceiveMonitoringUpdate", ordered);
+    }
+
+    public override void Dispose()
+    {
+        _settingsChangeRegistration?.Dispose();
+        base.Dispose();
     }
 }
