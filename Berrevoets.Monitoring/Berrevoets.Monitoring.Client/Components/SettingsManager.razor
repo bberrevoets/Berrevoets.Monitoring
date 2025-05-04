@@ -17,13 +17,20 @@
             <div class="card-body">
                 <h6>Theme</h6>
                 <div class="form-check form-switch mb-3">
-                    <input class="form-check-input" type="checkbox" id="darkModeSwitch" @onchange="ToggleDarkMode" checked="@_isDarkMode">
+                    <input disabled="disabled" class="form-check-input" type="checkbox" id="darkModeSwitch" @onchange="ToggleDarkMode" checked="@_isDarkMode">
                     <label class="form-check-label" for="darkModeSwitch">
-                        @(_isDarkMode ? "Dark Mode" : "Light Mode")
+                        @if (_isDarkMode)
+                        {
+                            <IconComponent Icon="@Icons.MOON_FILL" Size="18" />
+                            <span class="ms-2">Dark Mode</span>
+                        }
+                        else
+                        {
+                            <IconComponent Icon="@Icons.SUN" Size="18" />
+                            <span class="ms-2">Light Mode</span>
+                        }
                     </label>
                 </div>
-
-                <!-- Rest of your UI remains the same -->
 
                 <h6>Refresh Rate</h6>
                 <select class="form-select mb-3" @bind="_clientRefreshRate">
