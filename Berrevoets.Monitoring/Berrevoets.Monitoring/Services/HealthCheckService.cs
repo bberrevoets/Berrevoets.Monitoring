@@ -29,6 +29,7 @@ public class HealthCheckService : BackgroundService
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
         _httpClient = httpClient;
+        _settings = settings;
 
         // Initial value
         _checkInterval = TimeSpan.FromSeconds(_settings.CurrentValue.CheckIntervalSeconds);

@@ -2,6 +2,7 @@
 @inject MonitoringHubService HubService
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@using Berrevoets.Monitoring.Client.Components
 @using Berrevoets.Monitoring.Client.Services
 @using Berrevoets.Monitoring.Entities.DTO
 @implements IAsyncDisposable
@@ -21,6 +22,7 @@ else
 {
     <div class="alert alert-success">
         <i class="oi oi-check"></i> Connected to monitoring service
+        <p>Display last updated on: @(_lastUpdated.ToLocalTime().ToString("F"))</p>
     </div>
 }
 
@@ -36,54 +38,49 @@ else
 else
 {
     <div class="row">
-        @foreach (var env in _environments)
+        @foreach (var environment in _environments)
         {
-            <div class="col-12 mb-4">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h3>@env.Name</h3>
-                        <span class="badge @(env.IsActive ? "bg-success" : "bg-secondary")">
-                            @(env.IsActive ? "Active" : "Inactive")
-                        </span>
+            <div class="col-md-3">
+                <div class="card mb-4>">
+                    <div class="card-header bg-light">
+                        <h4>@environment.Name</h4>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            @foreach (var app in env.Applications)
-                            {
-                                <div class="col-md-4 mb-3">
-                                    <div class="card h-100">
-                                        <div class="card-header d-flex justify-content-between">
-                                            <span>@app.Name</span>
-                                            <span class="badge @GetStatusClass(app.Status)">@app.Status</span>
-                                        </div>
-                                        <div class="card-body">
-                                            <p>@app.Description</p>
-                                            @if (!string.IsNullOrEmpty(app.StatusMessage))
-                                            {
-                                                <div class="alert alert-info">
-                                                    @app.StatusMessage
-                                                </div>
-                                            }
-                                        </div>
-                                        <div class="card-footer text-muted">
-                                            Updated: @app.LastUpdated.ToString("g")
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                    <div class="card-footer text-muted">
-                        Last Updated: @env.LastUpdated.ToString("g")
+                        @foreach (var application in environment.Applications)
+                        {
+                            <ApplicationCard Application="application"/>
+                        }
+                        @if (!environment.Applications.Any())
+                        {
+                            <p class="text-muted">No Applications in this environment.</p>
+                        }
                     </div>
                 </div>
             </div>
         }
+
+        <!-- Last column for external links -->
+        <div class="col-md-3 environment-column">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Quick Links</h4>
+                </div>
+                <div class="card-body">
+                    <div class="quick-links">
+                        <a href="https://example.com" target="_blank" class="btn btn-primary btn-block mb-2">Example Website</a>
+                        <a href="https://anotherexample.com" target="_blank" class="btn btn-secondary btn-block mb-2">Another Example</a>
+                        <a href="https://yetanotherexample.com" target="_blank" class="btn btn-info btn-block">Yet Another Example</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
+
 @code {
     private List<MonitoredEnvironmentDto> _environments = new();
+    private DateTime _lastUpdated = DateTime.UtcNow;
 
     protected override async Task OnInitializedAsync()
     {
@@ -117,9 +114,10 @@ else
         Console.WriteLine($"HandleEnvironmentUpdated called with {environments.Count} environments");
 
         _environments = environments;
-    
+        _lastUpdated = DateTime.UtcNow;
+
         // In WebAssembly, we're already on the UI thread, but InvokeAsync ensures it
-        InvokeAsync(() => 
+        InvokeAsync(() =>
         {
             try
             {
@@ -151,5 +149,5 @@ else
         // Unsubscribe from events when the component is disposed
         HubService.OnEnvironmentUpdated -= HandleEnvironmentUpdated;
     }
-}
 
+}
