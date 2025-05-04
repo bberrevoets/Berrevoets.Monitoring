@@ -15,6 +15,8 @@ builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.Environment
 builder.Services.Configure<HealthCheckSettings>(
     builder.Configuration.GetSection("HealthCheckService"));
 
+builder.Services.AddScoped<ThemeService>();
+
 builder.AddServiceDefaults();
 
 builder.AddSqlServerDbContext<HealthConfigDbContext>("health-config");
