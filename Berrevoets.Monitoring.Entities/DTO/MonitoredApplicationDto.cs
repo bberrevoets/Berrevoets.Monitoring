@@ -10,4 +10,5 @@ public class MonitoredApplicationDto
     public string Status { get; set; } = string.Empty;
     public string? StatusMessage { get; set; }
     public DateTime LastUpdated { get; set; }
+    public string? SwaggerUrl { get; set; }
 }

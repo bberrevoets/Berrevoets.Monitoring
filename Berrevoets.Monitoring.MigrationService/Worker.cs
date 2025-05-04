@@ -83,6 +83,7 @@ public class Worker : BackgroundService
                     Name = "Sample Application",
                     Description = "A sample application for monitoring.",
                     HealthEndpoint = "https://run.mocky.io/v3/b3361eec-d30f-4078-87f2-d4c89cee4858",
+                    SwaggerUrl = "https://petstore.swagger.io",
                     IsActive = true
                 },
                 new MonitoredApplication
@@ -99,6 +100,7 @@ public class Worker : BackgroundService
                     Name = "Sample Application",
                     Description = "A sample application for monitoring.",
                     HealthEndpoint = "https://run.mocky.io/v3/263cac1e-50a9-4a64-b8c5-3f52dc46deb4",
+                    SwaggerUrl = "https://petstore.swagger.io",
                     IsActive = true
                 }
             ]
@@ -126,6 +128,7 @@ public class Worker : BackgroundService
                     Name = "Sample Application",
                     Description = "A sample application for monitoring.",
                     HealthEndpoint = "https://run.mocky.io/v3/4a82791c-c38f-49b8-a4a4-259652f0da4e",
+                    SwaggerUrl = "https://petstore.swagger.io",
                     IsActive = false
                 },
                 new MonitoredApplication
@@ -161,6 +164,7 @@ public class Worker : BackgroundService
                     Name = "Sample Application",
                     Description = "A sample application for monitoring.",
                     HealthEndpoint = "https://run.mocky.io/v3/4a82791c-c38f-49b8-a4a4-259652f0da4e",
+                    SwaggerUrl = "https://petstore.swagger.io",
                     IsActive = false
                 },
                 new MonitoredApplication
@@ -188,6 +192,7 @@ public class Worker : BackgroundService
                     Name = "Sample Application",
                     Description = "A sample application for monitoring.",
                     HealthEndpoint = "https://run.mocky.io/v3/b3361eec-d30f-4078-87f2-d4c89cee4858",
+                    SwaggerUrl = "https://petstore.swagger.io",
                     IsActive = true
                 },
                 new MonitoredApplication

@@ -26,4 +26,7 @@ public class MonitoredApplication
     public string? StatusMessage { get; set; }
 
     public DateTime LastUpdated { get; set; }
+
+    [MaxLength(2048)]
+    public string? SwaggerUrl { get; set; }
 }

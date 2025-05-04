@@ -5,7 +5,7 @@
 @using Berrevoets.Monitoring.Client.Components
 @using Berrevoets.Monitoring.Client.Services
 @using Berrevoets.Monitoring.Entities.DTO
-@implements IAsyncDisposable
+@implements IAsyncDisposable 
 @rendermode InteractiveWebAssembly
 
 <PageTitle>Health Monitoring Dashboard</PageTitle>
@@ -15,13 +15,13 @@
 @if (!HubService.IsConnected)
 {
     <div class="alert alert-warning">
-        <i class="oi oi-warning"></i> Connecting to server...
+        <IconComponent Icon="@BootstrapIconsForDotNet.Icons.ALARM" Size="24" /> Connecting to server...
     </div>
 }
 else
 {
     <div class="alert alert-success">
-        <i class="oi oi-check"></i> Connected to monitoring service
+        <IconComponent Icon="@BootstrapIconsForDotNet.Icons.CHECK" Size="24" /> Connected to monitoring service
         <p>Display last updated on: @(_lastUpdated.ToLocalTime().ToString("F"))</p>
     </div>
 }
