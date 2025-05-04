@@ -3,78 +3,80 @@
 @inject HttpClient Http
 @inject IJSRuntime JsRuntime
 
-<h2 class="mb-4">Environment Management</h2>
+<div class="px-1">
+    <h2 class="mb-4">Environment Management</h2>
 
-<div class="mb-3">
-    <button class="btn btn-primary" @onclick="() => ShowEnvironmentModal(null)">
-        <IconComponent Icon="@Icons.PLUS_CIRCLE" Size="18"/> Add Environment
-    </button>
-</div>
-
-@if (Environments.Count == 0)
-{
-    <div class="alert alert-info">
-        <IconComponent Icon="@Icons.INFO_CIRCLE" Size="20"/>
-        No environments found. Add an environment to get started.
-    </div>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Status</th>
-                <th>Apps</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody id="sortable-environments">
-            @foreach (var env in Environments.OrderBy(e => e.OrderNumber))
-            {
-                <tr draggable="true"
-                    @ondragstart="@(() => HandleDragStart(env))"
-                    @ondragover:preventDefault
-                    @ondragenter:preventDefault
-                    @ondrop="@(() => HandleDrop(env))"
-                    @key="env.Id">
-                    <td>
-                        <div class="drag-handle me-2" style="cursor: move; display: inline-block;">
-                            <IconComponent Icon="@Icons.GRIP_VERTICAL" Size="18"/>
-                        </div>
-                        @env.Name
-                    </td>
-                    <td>
-                        <span class="badge @(env.IsActive ? "bg-success" : "bg-secondary")">
-                            @(env.IsActive ? "Active" : "Inactive")
-                        </span>
-                    </td>
-                    <td>@env.Applications.Count</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary me-1" @onclick="() => ShowEnvironmentModal(env)">
-                            <IconComponent Icon="@Icons.PENCIL" Size="16"/>
-                        </button>
-                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteEnvironment(env)">
-                            <IconComponent Icon="@Icons.TRASH" Size="16"/>
-                        </button>
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
+    <div class="mb-3">
+        <button class="btn btn-primary" @onclick="() => ShowEnvironmentModal(null)">
+            <IconComponent Icon="@Icons.PLUS_CIRCLE" Size="18" style="margin-right: 0.5rem;" /> Add Environment
+        </button>
     </div>
 
-    @if (_isReordering)
+    @if (Environments.Count == 0)
     {
-        <div class="text-end mt-2">
-            <span class="text-muted me-2">Order changed. </span>
-            <button class="btn btn-sm btn-primary" @onclick="SaveReordering">
-                <IconComponent Icon="@Icons.SAVE" Size="16"/> Save Order
-            </button>
+        <div class="alert alert-info">
+            <IconComponent Icon="@Icons.INFO_CIRCLE" Size="20" style="margin-right: 0.5rem;" />
+            No environments found. Add an environment to get started.
         </div>
     }
-}
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Apps</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="sortable-environments">
+                    @foreach (var env in Environments.OrderBy(e => e.OrderNumber))
+                    {
+                        <tr draggable="true"
+                            @ondragstart="@(() => HandleDragStart(env))"
+                        @ondragover:preventDefault
+                        @ondragenter:preventDefault
+                            @ondrop="@(() => HandleDrop(env))"
+                            @key="env.Id">
+                            <td>
+                                <div class="drag-handle me-2" style="cursor: move; display: inline-block;">
+                                    <IconComponent Icon="@Icons.GRIP_VERTICAL" Size="18" />
+                                </div>
+                                @env.Name
+                            </td>
+                            <td>
+                                <span class="badge @(env.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(env.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                            <td>@env.Applications.Count</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary me-1" @onclick="() => ShowEnvironmentModal(env)">
+                                    <IconComponent Icon="@Icons.PENCIL" Size="16" />
+                                </button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => DeleteEnvironment(env)">
+                                    <IconComponent Icon="@Icons.TRASH" Size="16" />
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (_isReordering)
+        {
+            <div class="text-end mt-2">
+                <span class="text-muted me-2">Order changed. </span>
+                <button class="btn btn-sm btn-primary" @onclick="SaveReordering">
+                    <IconComponent Icon="@Icons.SAVE" Size="16" style="margin-right: 0.5rem;" /> Save Order
+                </button>
+            </div>
+        }
+    }
+</div>
 
 @if (_showEnvironmentModal)
 {
@@ -87,16 +89,16 @@ else
                 </div>
                 <div class="modal-body">
                     <EditForm Model="_editingEnvironment" OnValidSubmit="SaveEnvironment">
-                        <DataAnnotationsValidator/>
-                        <ValidationSummary/>
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
 
                         <div class="mb-3">
                             <label for="name" class="form-label">Name</label>
-                            <InputText id="name" class="form-control" @bind-Value="_editingEnvironment!.Name"/>
+                            <InputText id="name" class="form-control" @bind-Value="_editingEnvironment!.Name" />
                         </div>
 
                         <div class="form-check mb-3">
-                            <InputCheckbox id="active" class="form-check-input" @bind-Value="_editingEnvironment!.IsActive"/>
+                            <InputCheckbox id="active" class="form-check-input" @bind-Value="_editingEnvironment!.IsActive" />
                             <label class="form-check-label" for="active">
                                 Environment Active
                             </label>
@@ -135,25 +137,25 @@ else
         {
             // Create new environment
             _editingEnvironment = new MonitoredEnvironmentDto
-            {
-                Id = Guid.Empty,
-                Name = "",
-                OrderNumber = Environments.Count > 0 ? Environments.Max(e => e.OrderNumber) + 1 : 1,
-                IsActive = true,
-                Applications = new List<MonitoredApplicationDto>()
-            };
+                {
+                    Id = Guid.Empty,
+                    Name = "",
+                    OrderNumber = Environments.Count > 0 ? Environments.Max(e => e.OrderNumber) + 1 : 1,
+                    IsActive = true,
+                    Applications = new List<MonitoredApplicationDto>()
+                };
         }
         else
         {
             // Edit existing environment
             _editingEnvironment = new MonitoredEnvironmentDto
-            {
-                Id = environment.Id,
-                Name = environment.Name,
-                OrderNumber = environment.OrderNumber,
-                IsActive = environment.IsActive,
-                Applications = environment.Applications
-            };
+                {
+                    Id = environment.Id,
+                    Name = environment.Name,
+                    OrderNumber = environment.OrderNumber,
+                    IsActive = environment.IsActive,
+                    Applications = environment.Applications
+                };
         }
 
         _showEnvironmentModal = true;
@@ -263,12 +265,12 @@ else
             foreach (var env in Environments)
             {
                 var updateDto = new MonitoredEnvironmentDto
-                {
-                    Id = env.Id,
-                    Name = env.Name,
-                    IsActive = env.IsActive,
-                    OrderNumber = env.OrderNumber
-                };
+                    {
+                        Id = env.Id,
+                        Name = env.Name,
+                        IsActive = env.IsActive,
+                        OrderNumber = env.OrderNumber
+                    };
 
                 await Http.PutAsJsonAsync($"/api/environments/{env.Id}", updateDto);
             }
@@ -289,5 +291,4 @@ else
             await JsRuntime.InvokeVoidAsync("dragHelper.initialize");
         }
     }
-
 }

@@ -16,29 +16,34 @@
 
     <div class="card mb-4">
         <div class="card-header p-0">
-            <ul class="nav nav-tabs card-header-tabs">
-                <li class="nav-item">
-                    <button class="nav-link @(_activeTab == "environments" ? "active" : "")"
-                            @onclick='() => _activeTab = "environments"'>
+            <nav>
+                <div class="nav nav-tabs card-header-tabs ps-2" role="tablist">
+                    <button class="nav-link @(_activeTab == "environments" ? "active" : "") ms-0 rounded-0 rounded-top"
+                            @onclick='() => _activeTab = "environments"'
+                            id="environments-tab"
+                            role="tab"
+                            aria-controls="environments-content">
                         <IconComponent Icon="@Icons.COLLECTION" Size="18" style="margin-right: 0.5rem;" />
                         Environments
                     </button>
-                </li>
-                <li class="nav-item">
                     <button class="nav-link @(_activeTab == "applications" ? "active" : "")"
-                            @onclick='() => _activeTab = "applications"'>
+                            @onclick='() => _activeTab = "applications"'
+                            id="applications-tab"
+                            role="tab"
+                            aria-controls="applications-content">
                         <IconComponent Icon="@Icons.APP" Size="18" style="margin-right: 0.5rem;" />
                         Applications
                     </button>
-                </li>
-                <li class="nav-item">
                     <button class="nav-link @(_activeTab == "settings" ? "active" : "")"
-                            @onclick='() => _activeTab = "settings"'>
+                            @onclick='() => _activeTab = "settings"'
+                            id="settings-tab"
+                            role="tab"
+                            aria-controls="settings-content">
                         <IconComponent Icon="@Icons.SLIDERS" Size="18" style="margin-right: 0.5rem;" />
                         Settings
                     </button>
-                </li>
-            </ul>
+                </div>
+            </nav>
         </div>
         <div class="card-body">
             @switch (_activeTab)
