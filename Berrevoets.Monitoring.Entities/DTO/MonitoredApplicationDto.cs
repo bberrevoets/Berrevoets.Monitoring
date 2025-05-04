@@ -9,4 +9,5 @@ public class MonitoredApplicationDto
     public bool IsActive { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? StatusMessage { get; set; }
+    public DateTime LastUpdated { get; set; }
 }

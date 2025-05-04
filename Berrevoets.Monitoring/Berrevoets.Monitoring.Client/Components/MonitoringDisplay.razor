@@ -1,0 +1,103 @@
+﻿@page "/monitoring"
+@inject MonitoringHubService HubService
+@inject HttpClient Http
+@using Berrevoets.Monitoring.Client.Services
+@using Berrevoets.Monitoring.Entities.DTO
+@implements IAsyncDisposable
+
+<h3>Monitoring Dashboard</h3>
+
+@if (!HubService.IsConnected)
+{
+    <div class="alert alert-warning">
+        Connecting to server...
+    </div>
+}
+else
+{
+    <div class="alert alert-success">
+        Connected to server
+    </div>
+}
+
+@if (HubService.Environments.Count == 0)
+{
+    <p>Loading data...</p>
+}
+else
+{
+    <h4>Environments</h4>
+    <ul>
+        @foreach (var env in HubService.Environments)
+        {
+            <li>
+                <strong>@env.Name</strong> (@(env.IsActive ? "Active" : "Inactive"))
+                <small>Last Updated: @env.LastUpdated.ToString("g")</small>
+                <ul>
+                    @foreach (var app in env.Applications)
+                    {
+                        <li>
+                            <span>@app.Name</span>
+                            <span class="badge @GetStatusClass(app.Status)">@app.Status</span>
+                            <div>
+                                <small>@app.Description</small>
+                            </div>
+                            @if (!string.IsNullOrEmpty(app.StatusMessage))
+                            {
+                                <div>
+                                    <small>@app.StatusMessage</small>
+                                </div>
+                            }
+                            <div>
+                                <small>Last Updated: @app.LastUpdated.ToString("g")</small>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to environment updates
+        HubService.OnEnvironmentUpdated += HandleEnvironmentUpdated;
+
+        // Connect to the SignalR hub
+        await HubService.StartConnectionAsync();
+
+        // Load initial data
+        await HubService.LoadInitialDataAsync(Http);
+
+        await base.OnInitializedAsync();
+    }
+
+    private void HandleEnvironmentUpdated(List<MonitoredEnvironmentDto> environments)
+    {
+        // The HubService already updated its Environments property
+        // We just need to tell Blazor to re-render the component
+        StateHasChanged();
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Healthy" => "bg-success",
+            "Unhealthy" => "bg-danger",
+            "Degraded" => "bg-warning",
+            "Error" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Unsubscribe from events when the component is disposed
+        HubService.OnEnvironmentUpdated -= HandleEnvironmentUpdated;
+    }
+
+}

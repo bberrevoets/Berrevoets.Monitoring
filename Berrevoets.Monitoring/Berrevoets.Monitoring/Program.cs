@@ -1,14 +1,40 @@
-using Berrevoets.Monitoring.Client.Pages;
+using Berrevoets.Monitoring;
 using Berrevoets.Monitoring.Components;
 using Berrevoets.Monitoring.Entities;
 using Berrevoets.Monitoring.Entities.DTO;
+using Berrevoets.Monitoring.HUB;
+using Berrevoets.Monitoring.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
+builder.Services.Configure<HealthCheckSettings>(
+    builder.Configuration.GetSection("HealthCheckService"));
+
 builder.AddServiceDefaults();
 
 builder.AddSqlServerDbContext<HealthConfigDbContext>("health-config");
+
+builder.Services.AddSignalR(options => { options.EnableDetailedErrors = true; });
+builder.Services.AddScoped<Berrevoets.Monitoring.Client.Services.MonitoringHubService>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policy =>
+    {
+        policy
+            .SetIsOriginAllowed(_ => true)
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+});
+
+builder.Services.AddHostedService<HealthCheckService>();
+builder.Services.AddHttpClient();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -16,6 +42,10 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
 var app = builder.Build();
+
+app.UseCors("CorsPolicy");
+
+app.MapHub<MonitorHub>("/monitorHub");
 
 app.MapGet("/see_all", async (HealthConfigDbContext db) =>
 {
@@ -26,6 +56,7 @@ app.MapGet("/see_all", async (HealthConfigDbContext db) =>
             Id = env.Id,
             Name = env.Name,
             IsActive = env.IsActive,
+            LastUpdated = env.LastUpdated,
             Applications = env.Applications.Select(application => new MonitoredApplicationDto
                 {
                     Id = application.Id,
@@ -34,7 +65,8 @@ app.MapGet("/see_all", async (HealthConfigDbContext db) =>
                     HealthEndpoint = application.HealthEndpoint,
                     IsActive = application.IsActive,
                     Status = application.Status,
-                    StatusMessage = application.StatusMessage
+                    StatusMessage = application.StatusMessage,
+                    LastUpdated = application.LastUpdated
                 })
                 .ToList()
         })
@@ -64,7 +96,6 @@ else
 }
 
 app.UseHttpsRedirection();
-
 
 app.UseAntiforgery();
 
