@@ -2,6 +2,7 @@ using Berrevoets.Monitoring.Components;
 using Berrevoets.Monitoring.Entities;
 using Berrevoets.Monitoring.Entities.DTO;
 using Berrevoets.Monitoring.HUB;
+using Berrevoets.Monitoring.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +27,9 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
+
+builder.Services.AddHostedService<HealthCheckService>();
+builder.Services.AddHttpClient();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
