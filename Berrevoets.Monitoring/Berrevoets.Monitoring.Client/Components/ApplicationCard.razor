@@ -1,0 +1,21 @@
+﻿@using Berrevoets.Monitoring.Entities.DTO
+@if (Application != null)
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="card-title mb-0">@Application.Name</div>
+                <div class="status-indicator @(Application.Status == "Healthy" ? "bg-success" : Application.Status == "Degraded" ? "bg-warning" : "bg-danger")"
+                     title="@Application.Status">
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public MonitoredApplicationDto? Application { get; set; }
+
+}
