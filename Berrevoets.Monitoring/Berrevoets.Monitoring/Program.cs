@@ -67,7 +67,8 @@ app.MapGet("/see_all", async (HealthConfigDbContext db) =>
                     IsActive = application.IsActive,
                     Status = application.Status,
                     StatusMessage = application.StatusMessage,
-                    LastUpdated = application.LastUpdated
+                    LastUpdated = application.LastUpdated,
+                    SwaggerUrl = application.SwaggerUrl
                 })
                 .ToList()
         })
