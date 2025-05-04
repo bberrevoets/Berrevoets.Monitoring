@@ -1,0 +1,16 @@
+tr[draggable=true] { cursor: move; }
+
+tr[draggable=true]:hover {
+    background-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+tr[draggable=true].dragging {
+    background-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+    opacity: 0.5;
+}
+
+.drag-handle { color: #adb5bd; }
+
+tr:hover .drag-handle { color: #6c757d; }

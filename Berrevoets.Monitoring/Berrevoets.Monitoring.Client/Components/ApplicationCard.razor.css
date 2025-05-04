@@ -1,27 +1,26 @@
 .card {
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
     border-radius: 0.25rem;
     box-shadow: 0 1px 3px #000000;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.card-body {
-    padding: 0.5rem;
-}
+.card-body { padding: 0.5rem; }
 
 .status-indicator {
-    width: 16px;
-    height: 16px;
     border-radius: 50%;
     display: inline-block;
+    height: 16px;
+    width: 16px;
 }
 
 /* Style for inactive applications */
+
 .inactive-app {
-    opacity: 0.6; /* Make the card semi-transparent */
     filter: grayscale(50%); /* Apply grayscale effect */
+    opacity: 0.6; /* Make the card semi-transparent */
 }
 
 .inactive-app .card {
@@ -29,17 +28,19 @@
 }
 
 /* Hover effects for active applications only */
+
 :not(.inactive-app) > .card:hover {
-    transform: scale(1.03);
     box-shadow: 0 4px 8px #000000;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     cursor: pointer;
+    transform: scale(1.03);
 }
 
 /* Explicitly disable hover effects for inactive applications */
+
 .inactive-app > .card:hover {
-    transform: none;
     box-shadow: 0 1px 3px #000000;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     cursor: default;
+    transform: none;
 }
