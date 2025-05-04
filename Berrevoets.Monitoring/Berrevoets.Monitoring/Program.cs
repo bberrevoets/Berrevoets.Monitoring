@@ -57,6 +57,7 @@ app.MapGet("/see_all", async (HealthConfigDbContext db) =>
             Name = env.Name,
             IsActive = env.IsActive,
             LastUpdated = env.LastUpdated,
+            OrderNumber = env.OrderNumber,
             Applications = env.Applications.Select(application => new MonitoredApplicationDto
                 {
                     Id = application.Id,
@@ -72,10 +73,9 @@ app.MapGet("/see_all", async (HealthConfigDbContext db) =>
         })
         .ToListAsync();
 
-    var orderSequence = new[] { "Development", "Acceptation", "Routevision", "Fleetfinder" };
-
+    // Replace the existing ordering with the new logic
     var orderedAll = all
-        .OrderBy(env => Array.IndexOf(orderSequence, env.Name))
+        .OrderBy(env => env.OrderNumber)
         .ToList();
 
     return orderedAll;

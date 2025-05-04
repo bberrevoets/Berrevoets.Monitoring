@@ -11,5 +11,6 @@ public class MonitoredEnvironment
 
     public bool IsActive { get; set; }
     public DateTime LastUpdated { get; set; }
+    public int OrderNumber { get; set; }
     public List<MonitoredApplication> Applications { get; set; } = new();
 }
