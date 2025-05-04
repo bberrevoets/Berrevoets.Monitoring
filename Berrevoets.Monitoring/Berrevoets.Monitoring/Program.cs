@@ -11,10 +11,7 @@ builder.AddServiceDefaults();
 
 builder.AddSqlServerDbContext<HealthConfigDbContext>("health-config");
 
-builder.Services.AddSignalR(options =>
-{
-    options.EnableDetailedErrors = true;
-});
+builder.Services.AddSignalR(options => { options.EnableDetailedErrors = true; });
 
 builder.Services.AddCors(options =>
 {
@@ -51,6 +48,7 @@ app.MapGet("/see_all", async (HealthConfigDbContext db) =>
             Id = env.Id,
             Name = env.Name,
             IsActive = env.IsActive,
+            LastUpdated = env.LastUpdated,
             Applications = env.Applications.Select(application => new MonitoredApplicationDto
                 {
                     Id = application.Id,
@@ -59,7 +57,8 @@ app.MapGet("/see_all", async (HealthConfigDbContext db) =>
                     HealthEndpoint = application.HealthEndpoint,
                     IsActive = application.IsActive,
                     Status = application.Status,
-                    StatusMessage = application.StatusMessage
+                    StatusMessage = application.StatusMessage,
+                    LastUpdated = application.LastUpdated
                 })
                 .ToList()
         })
