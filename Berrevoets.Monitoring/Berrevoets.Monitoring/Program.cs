@@ -1,3 +1,4 @@
+using Berrevoets.Monitoring;
 using Berrevoets.Monitoring.Components;
 using Berrevoets.Monitoring.Entities;
 using Berrevoets.Monitoring.Entities.DTO;
@@ -7,11 +8,18 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
+builder.Services.Configure<HealthCheckSettings>(
+    builder.Configuration.GetSection("HealthCheckService"));
+
 builder.AddServiceDefaults();
 
 builder.AddSqlServerDbContext<HealthConfigDbContext>("health-config");
 
 builder.Services.AddSignalR(options => { options.EnableDetailedErrors = true; });
+builder.Services.AddScoped<Berrevoets.Monitoring.Client.Services.MonitoringHubService>();
 
 builder.Services.AddCors(options =>
 {
