@@ -14,12 +14,11 @@ public class HealthCheckService : BackgroundService
     private readonly IHubContext<MonitorHub> _hubContext;
     private readonly ILogger<HealthCheckService> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
-    private List<MonitoredEnvironment>? _previousEnvironments;
-    private readonly IOptionsMonitor<HealthCheckSettings> _settings;
 
     // Store the change token registration so we can dispose it
-    private IDisposable? _settingsChangeRegistration;
+    private readonly IDisposable? _settingsChangeRegistration;
     private TimeSpan _checkInterval;
+    private List<MonitoredEnvironment>? _previousEnvironments;
 
     public HealthCheckService(IHubContext<MonitorHub> hubContext,
         ILogger<HealthCheckService> logger, IServiceScopeFactory serviceScopeFactory, HttpClient httpClient,
@@ -29,13 +28,12 @@ public class HealthCheckService : BackgroundService
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
         _httpClient = httpClient;
-        _settings = settings;
 
         // Initial value
-        _checkInterval = TimeSpan.FromSeconds(_settings.CurrentValue.CheckIntervalSeconds);
+        _checkInterval = TimeSpan.FromSeconds(settings.CurrentValue.CheckIntervalSeconds);
 
         // Register for changes
-        _settingsChangeRegistration = _settings.OnChange(UpdateCheckInterval);
+        _settingsChangeRegistration = settings.OnChange(UpdateCheckInterval);
     }
 
     private void UpdateCheckInterval(HealthCheckSettings settings)
@@ -80,7 +78,7 @@ public class HealthCheckService : BackgroundService
 
         // If this is the first run, always consider it a change
         var dataChanged = _previousEnvironments == null;
-        
+
         // TODO: Remove this 
         dataChanged = true;
 
@@ -138,7 +136,7 @@ public class HealthCheckService : BackgroundService
 
         // Then check applications
         foreach (var environment in environments.Where(e => e.IsActive))
-        foreach (var application in environment.Applications.Where(a => a.IsActive))
+        foreach (var application in environment.Applications)
         {
             var applicationChanged = false;
 
@@ -147,13 +145,12 @@ public class HealthCheckService : BackgroundService
                 // Get previous state if available
                 var previousStatus = "Unknown";
                 string? previousStatusMessage = null;
-                var previousIsActive = false;
 
                 if (previousAppLookup != null && previousAppLookup.TryGetValue(application.Id, out var previousApp))
                 {
                     previousStatus = previousApp.Status;
                     previousStatusMessage = previousApp.StatusMessage;
-                    previousIsActive = previousApp.IsActive;
+                    var previousIsActive = previousApp.IsActive;
 
                     // Check if IsActive state changed
                     if (previousIsActive != application.IsActive)
@@ -169,6 +166,30 @@ public class HealthCheckService : BackgroundService
                 {
                     // New application
                     applicationChanged = true;
+                }
+
+                // Skip health check for inactive applications
+                if (!application.IsActive)
+                {
+                    // Set status to Unknown for inactive applications
+                    application.Status = "Unknown";
+                    application.StatusMessage = "Application inactive, health check not performed.";
+
+                    // Check if status or message changed
+                    if (application.Status != previousStatus || application.StatusMessage != previousStatusMessage)
+                    {
+                        _logger.LogInformation(
+                            "Status changed for inactive application {appName} in environment {envName}: {oldStatus} -> {newStatus}",
+                            application.Name, environment.Name, previousStatus, application.Status);
+                        dataChanged = true;
+                        applicationChanged = true;
+                    }
+
+                    // Update application timestamp if changed
+                    if (applicationChanged)
+                        application.LastUpdated = DateTime.UtcNow;
+
+                    continue; // Skip the rest of the loop for inactive applications
                 }
 
                 // Perform health check
@@ -357,23 +378,25 @@ public class HealthCheckService : BackgroundService
             Name = env.Name,
             IsActive = env.IsActive,
             LastUpdated = env.LastUpdated,
+            OrderNumber = env.OrderNumber,
             Applications = env.Applications.Select(app => new MonitoredApplicationDto
-            {
-                Id = app.Id,
-                Name = app.Name,
-                Description = app.Description,
-                HealthEndpoint = app.HealthEndpoint,
-                IsActive = app.IsActive,
-                Status = app.Status,
-                StatusMessage = app.StatusMessage,
-                LastUpdated = app.LastUpdated
-            }).ToList()
+                {
+                    Id = app.Id,
+                    Name = app.Name,
+                    Description = app.Description,
+                    HealthEndpoint = app.HealthEndpoint,
+                    IsActive = app.IsActive,
+                    Status = app.Status,
+                    StatusMessage = app.StatusMessage,
+                    LastUpdated = app.LastUpdated
+                }).OrderBy(app => Helpers.GetStatusPriority(app.Status))
+                .ThenBy(app => app.IsActive ? 0 : 1)
+                .ToList()
         }).ToList();
 
-        var orderSequence = new[] { "Development", "Acceptation", "Routevision", "Fleetfinder" };
-
+        // Replace the existing ordering with the new logic
         var ordered = environmentDtos
-            .OrderBy(env => Array.IndexOf(orderSequence, env.Name))
+            .OrderBy(env => env.OrderNumber)
             .ToList();
 
         await _hubContext.Clients.All.SendAsync("ReceiveMonitoringUpdate", ordered);
