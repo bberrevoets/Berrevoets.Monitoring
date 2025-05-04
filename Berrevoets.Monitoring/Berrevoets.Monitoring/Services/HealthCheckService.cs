@@ -79,9 +79,6 @@ public class HealthCheckService : BackgroundService
         // If this is the first run, always consider it a change
         var dataChanged = _previousEnvironments == null;
 
-        // TODO: Remove this 
-        dataChanged = true;
-
         // Create lookup dictionaries for previous state if available
         Dictionary<Guid, MonitoredEnvironment>? previousEnvLookup = null;
         Dictionary<Guid, MonitoredApplication>? previousAppLookup = null;
@@ -335,7 +332,7 @@ public class HealthCheckService : BackgroundService
     // Helper method to normalize status values to standard ones
     private string NormalizeStatus(string status)
     {
-        return status?.ToLowerInvariant() switch
+        return status.ToLowerInvariant() switch
         {
             "up" or "online" or "ok" or "pass" or "passing" or "healthy" or "available" => "Healthy",
             "down" or "offline" or "fail" or "failing" or "unhealthy" or "unavailable" => "Unhealthy",

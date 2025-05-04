@@ -11,7 +11,7 @@
     </button>
 </div>
 
-@if (_environments.Count == 0)
+@if (Environments.Count == 0)
 {
     <div class="alert alert-info">
         <IconComponent Icon="@Icons.INFO_CIRCLE" Size="20"/>
@@ -31,7 +31,7 @@ else
             </tr>
             </thead>
             <tbody id="sortable-environments">
-            @foreach (var env in _environments.OrderBy(e => e.OrderNumber))
+            @foreach (var env in Environments.OrderBy(e => e.OrderNumber))
             {
                 <tr draggable="true"
                     @ondragstart="@(() => HandleDragStart(env))"
@@ -127,7 +127,6 @@ else
     [Parameter]
     public EventCallback OnEnvironmentUpdated { get; set; }
 
-    private List<MonitoredEnvironmentDto> _environments => Environments;
     private bool _showEnvironmentModal;
     private MonitoredEnvironmentDto? _editingEnvironment;
 
@@ -144,7 +143,7 @@ else
             {
                 Id = Guid.Empty,
                 Name = "",
-                OrderNumber = _environments.Count > 0 ? _environments.Max(e => e.OrderNumber) + 1 : 1,
+                OrderNumber = Environments.Count > 0 ? Environments.Max(e => e.OrderNumber) + 1 : 1,
                 IsActive = true,
                 Applications = new List<MonitoredApplicationDto>()
             };
@@ -238,7 +237,7 @@ else
         if (draggedOrder < targetOrder)
         {
             // Moving down - adjust all items between
-            foreach (var env in _environments.Where(e => e.OrderNumber > draggedOrder && e.OrderNumber <= targetOrder))
+            foreach (var env in Environments.Where(e => e.OrderNumber > draggedOrder && e.OrderNumber <= targetOrder))
             {
                 env.OrderNumber--;
             }
@@ -246,7 +245,7 @@ else
         else
         {
             // Moving up - adjust all items between
-            foreach (var env in _environments.Where(e => e.OrderNumber < draggedOrder && e.OrderNumber >= targetOrder))
+            foreach (var env in Environments.Where(e => e.OrderNumber < draggedOrder && e.OrderNumber >= targetOrder))
             {
                 env.OrderNumber++;
             }
@@ -266,7 +265,7 @@ else
         try
         {
             // For each environment that was reordered
-            foreach (var env in _environments)
+            foreach (var env in Environments)
             {
                 var updateDto = new MonitoredEnvironmentDto
                 {
