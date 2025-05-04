@@ -10,52 +10,57 @@
 
 <div class="container-fluid">
     <h3 class="mb-4">
-        <IconComponent Icon="@Icons.GEAR" Size="28"/>
+        <IconComponent Icon="@Icons.GEAR" Size="28" style="margin-right: 0.5rem;" />
         Monitoring Administration
     </h3>
 
-    <div class="row">
-        <!-- Navigation sidebar -->
-        <div class="list-group">
-            <a class="list-group-item list-group-item-action @(_activeTab == "environments" ? "active" : "")"
-               @onclick='() => _activeTab = "environments"'>
-                <IconComponent Icon="@Icons.COLLECTION" Size="18"/>
-                Environments
-            </a>
-            <a class="list-group-item list-group-item-action @(_activeTab == "applications" ? "active" : "")"
-               @onclick='() => _activeTab = "applications"'>
-                <IconComponent Icon="@Icons.APP" Size="18"/>
-                Applications
-            </a>
-            <a class="list-group-item list-group-item-action @(_activeTab == "settings" ? "active" : "")"
-               @onclick='() => _activeTab = "settings"'>
-                <IconComponent Icon="@Icons.SLIDERS" Size="18"/>
-                Settings
-            </a>
-        </div>
-
-
-        <!-- Main content area -->
-        <div class="col-md-9">
-            <div class="card">
-                <div class="card-body">
-                    @switch (_activeTab)
-                    {
-                        case "environments":
-                            <EnvironmentsManager Environments="_environments" OnEnvironmentUpdated="RefreshEnvironments"/>
-                            break;
-                        case "applications":
-                            <ApplicationsManager Environments="_environments" OnApplicationUpdated="RefreshEnvironments"/>
-                            break;
-                        case "settings":
-                            <SettingsManager/>
-                            break;
-                        default:
-                            <p>Select an option from the sidebar</p>
-                            break;
-                    }
+    <div class="card mb-4">
+        <div class="card-header p-0">
+            <nav>
+                <div class="nav nav-tabs card-header-tabs ps-2" role="tablist">
+                    <button class="nav-link @(_activeTab == "environments" ? "active" : "") ms-0 rounded-0 rounded-top"
+                            @onclick='() => _activeTab = "environments"'
+                            id="environments-tab"
+                            role="tab"
+                            aria-controls="environments-content">
+                        <IconComponent Icon="@Icons.COLLECTION" Size="18" style="margin-right: 0.5rem;" />
+                        Environments
+                    </button>
+                    <button class="nav-link @(_activeTab == "applications" ? "active" : "")"
+                            @onclick='() => _activeTab = "applications"'
+                            id="applications-tab"
+                            role="tab"
+                            aria-controls="applications-content">
+                        <IconComponent Icon="@Icons.APP" Size="18" style="margin-right: 0.5rem;" />
+                        Applications
+                    </button>
+                    <button class="nav-link @(_activeTab == "settings" ? "active" : "")"
+                            @onclick='() => _activeTab = "settings"'
+                            id="settings-tab"
+                            role="tab"
+                            aria-controls="settings-content">
+                        <IconComponent Icon="@Icons.SLIDERS" Size="18" style="margin-right: 0.5rem;" />
+                        Settings
+                    </button>
                 </div>
-            </div>
+            </nav>
+        </div>
+        <div class="card-body">
+            @switch (_activeTab)
+            {
+                case "environments":
+                    <EnvironmentsManager Environments="_environments" OnEnvironmentUpdated="RefreshEnvironments" />
+                    break;
+                case "applications":
+                    <ApplicationsManager Environments="_environments" OnApplicationUpdated="RefreshEnvironments" />
+                    break;
+                case "settings":
+                    <SettingsManager />
+                    break;
+                default:
+                    <p>Select an option from the tabs above</p>
+                    break;
+            }
         </div>
     </div>
 </div>
@@ -91,5 +96,4 @@
             StateHasChanged();
         }
     }
-
 }
