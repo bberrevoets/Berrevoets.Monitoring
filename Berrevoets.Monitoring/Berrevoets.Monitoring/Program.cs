@@ -52,6 +52,7 @@ app.MapHub<MonitorHub>("/monitorHub");
 
 app.MapEnvironmentEndpoints();
 app.MapApplicationEndpoints();
+app.MapQuickLinkEndpoints();
 
 app.MapDefaultEndpoints();
 

@@ -101,6 +101,41 @@ namespace Berrevoets.Monitoring.Entities.Migrations
                     b.ToTable("MonitoredEnvironments");
                 });
 
+            modelBuilder.Entity("Berrevoets.Monitoring.Entities.QuickLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ButtonClass")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Icon")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("OrderNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("QuickLinks");
+                });
+
             modelBuilder.Entity("Berrevoets.Monitoring.Entities.MonitoredApplication", b =>
                 {
                     b.HasOne("Berrevoets.Monitoring.Entities.MonitoredEnvironment", "Environment")
