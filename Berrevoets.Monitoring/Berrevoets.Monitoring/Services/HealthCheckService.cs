@@ -131,146 +131,27 @@ public class HealthCheckService : BackgroundService
             foreach (var environment in environments)
                 environment.LastUpdated = DateTime.UtcNow;
 
-        // Then check applications
+        // Create a list to collect all health check tasks
+        var healthCheckTasks = new List<Task<bool>>();
+
+        // Then check applications in parallel
         foreach (var environment in environments.Where(e => e.IsActive))
-        foreach (var application in environment.Applications)
         {
-            var applicationChanged = false;
-
-            try
+            foreach (var application in environment.Applications)
             {
-                // Get previous state if available
-                var previousStatus = "Unknown";
-                string? previousStatusMessage = null;
-
-                if (previousAppLookup != null && previousAppLookup.TryGetValue(application.Id, out var previousApp))
-                {
-                    previousStatus = previousApp.Status;
-                    previousStatusMessage = previousApp.StatusMessage;
-                    var previousIsActive = previousApp.IsActive;
-
-                    // Check if IsActive state changed
-                    if (previousIsActive != application.IsActive)
-                    {
-                        _logger.LogInformation(
-                            "IsActive changed for application {appName} in environment {envName}: {oldState} -> {newState}",
-                            application.Name, environment.Name, previousIsActive, application.IsActive);
-                        applicationChanged = true;
-                        dataChanged = true;
-                    }
-                }
-                else
-                {
-                    // New application
-                    applicationChanged = true;
-                }
-
-                // Skip health check for inactive applications
-                if (!application.IsActive)
-                {
-                    // Set status to Unknown for inactive applications
-                    application.Status = "Unknown";
-                    application.StatusMessage = "Application inactive, health check not performed.";
-
-                    // Check if status or message changed
-                    if (application.Status != previousStatus || application.StatusMessage != previousStatusMessage)
-                    {
-                        _logger.LogInformation(
-                            "Status changed for inactive application {appName} in environment {envName}: {oldStatus} -> {newStatus}",
-                            application.Name, environment.Name, previousStatus, application.Status);
-                        dataChanged = true;
-                        applicationChanged = true;
-                    }
-
-                    // Update application timestamp if changed
-                    if (applicationChanged)
-                        application.LastUpdated = DateTime.UtcNow;
-
-                    continue; // Skip the rest of the loop for inactive applications
-                }
-
-                // Perform health check
-                var response = await _httpClient.GetAsync(application.HealthEndpoint, stoppingToken);
-
-                // Process the response
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseContent = await response.Content.ReadAsStringAsync(stoppingToken);
-
-                    // Try to parse as JSON first
-                    try
-                    {
-                        using var jsonDoc = JsonDocument.Parse(responseContent);
-
-                        // Try to extract status from common health check formats
-                        if (jsonDoc.RootElement.TryGetProperty("status", out var statusElement))
-                            application.Status = statusElement.GetString() ?? "Healthy";
-                        else
-                            application.Status = "Healthy"; // Default if no status property
-
-                        // Try to extract message if present
-                        if (jsonDoc.RootElement.TryGetProperty("message", out var messageElement) ||
-                            jsonDoc.RootElement.TryGetProperty("description", out messageElement) ||
-                            jsonDoc.RootElement.TryGetProperty("statusMessage", out messageElement))
-                            application.StatusMessage = messageElement.GetString();
-                        else
-                            application.StatusMessage = null;
-                    }
-                    catch (JsonException)
-                    {
-                        // Not valid JSON, treat as plain text status
-                        application.Status = responseContent.Trim().Length > 0 ? responseContent.Trim() : "Healthy";
-                        application.StatusMessage = null;
-                    }
-                }
-                else
-                {
-                    application.Status = "Unhealthy";
-                    application.StatusMessage = $"HTTP Status: {(int)response.StatusCode} {response.ReasonPhrase}";
-                }
-
-                // Normalize status to one of the standard values
-                application.Status = NormalizeStatus(application.Status);
-
-                // Check if status or message changed
-                if (application.Status != previousStatus || application.StatusMessage != previousStatusMessage)
-                {
-                    _logger.LogInformation(
-                        "Status changed for application {appName} in environment {envName}: {oldStatus} -> {newStatus}",
-                        application.Name, environment.Name, previousStatus, application.Status);
-                    dataChanged = true;
-                    applicationChanged = true;
-                }
-
-                // Update application timestamp if changed
-                if (applicationChanged)
-                    application.LastUpdated = DateTime.UtcNow;
+                // Create a task for each application health check
+                var task = CheckApplicationHealthAsync(environment, application, previousAppLookup, stoppingToken);
+                healthCheckTasks.Add(task);
             }
-            catch (Exception ex)
-            {
-                // Get previous state if available
-                var previousStatus = "Unknown";
-                string? previousStatusMessage = null;
+        }
 
-                if (previousAppLookup != null && previousAppLookup.TryGetValue(application.Id, out var previousApp))
-                {
-                    previousStatus = previousApp.Status;
-                    previousStatusMessage = previousApp.StatusMessage;
-                }
+        // Wait for all health check tasks to complete
+        var results = await Task.WhenAll(healthCheckTasks);
 
-                // Update application status to indicate error
-                application.Status = "Error";
-                application.StatusMessage = $"Exception: {ex.Message}";
-
-                if (application.Status != previousStatus || application.StatusMessage != previousStatusMessage)
-                {
-                    application.LastUpdated = DateTime.UtcNow;
-                    dataChanged = true;
-                }
-
-                _logger.LogWarning(ex, "Error checking health for application {appName} in environment {envName}",
-                    application.Name, environment.Name);
-            }
+        // If any of the checks resulted in a change, mark the data as changed
+        if (results.Any(changed => changed))
+        {
+            dataChanged = true;
         }
 
         // Check for new or removed applications/environments if we have previous data
@@ -328,6 +209,171 @@ public class HealthCheckService : BackgroundService
         }
     }
 
+    private async Task<bool> CheckApplicationHealthAsync(
+        MonitoredEnvironment environment,
+        MonitoredApplication application,
+        Dictionary<Guid, MonitoredApplication>? previousAppLookup,
+        CancellationToken stoppingToken)
+    {
+        var applicationChanged = false;
+
+        try
+        {
+            // Create a timeout token source that will cancel after 5 seconds
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, stoppingToken);
+
+            // Get previous state if available
+            var previousStatus = "Unknown";
+            string? previousStatusMessage = null;
+
+            if (previousAppLookup != null && previousAppLookup.TryGetValue(application.Id, out var previousApp))
+            {
+                previousStatus = previousApp.Status;
+                previousStatusMessage = previousApp.StatusMessage;
+                var previousIsActive = previousApp.IsActive;
+
+                // Check if IsActive state changed
+                if (previousIsActive != application.IsActive)
+                {
+                    _logger.LogInformation(
+                        "IsActive changed for application {appName} in environment {envName}: {oldState} -> {newState}",
+                        application.Name, environment.Name, previousIsActive, application.IsActive);
+                    applicationChanged = true;
+                }
+            }
+            else
+            {
+                // New application
+                applicationChanged = true;
+            }
+
+            // Skip health check for inactive applications
+            if (!application.IsActive)
+            {
+                // Set status to Unknown for inactive applications
+                application.Status = "Unknown";
+                application.StatusMessage = "Application inactive, health check not performed.";
+
+                // Check if status or message changed
+                if (application.Status != previousStatus || application.StatusMessage != previousStatusMessage)
+                {
+                    _logger.LogInformation(
+                        "Status changed for inactive application {appName} in environment {envName}: {oldStatus} -> {newStatus}",
+                        application.Name, environment.Name, previousStatus, application.Status);
+                    applicationChanged = true;
+                }
+
+                // Update application timestamp if changed
+                if (applicationChanged)
+                    application.LastUpdated = DateTime.UtcNow;
+
+                return applicationChanged; // Return early for inactive applications
+            }
+
+            try
+            {
+                // Perform health check with timeout
+                var response = await _httpClient.GetAsync(application.HealthEndpoint, linkedCts.Token);
+
+                // Process the response
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync(linkedCts.Token);
+
+                    // Try to parse as JSON first
+                    try
+                    {
+                        using var jsonDoc = JsonDocument.Parse(responseContent);
+
+                        // Try to extract status from common health check formats
+                        if (jsonDoc.RootElement.TryGetProperty("status", out var statusElement))
+                            application.Status = statusElement.GetString() ?? "Healthy";
+                        else
+                            application.Status = "Healthy"; // Default if no status property
+
+                        // Try to extract message if present
+                        if (jsonDoc.RootElement.TryGetProperty("message", out var messageElement) ||
+                            jsonDoc.RootElement.TryGetProperty("description", out messageElement) ||
+                            jsonDoc.RootElement.TryGetProperty("statusMessage", out messageElement))
+                            application.StatusMessage = messageElement.GetString();
+                        else
+                            application.StatusMessage = null;
+                    }
+                    catch (JsonException)
+                    {
+                        // Not valid JSON, treat as plain text status
+                        application.Status = responseContent.Trim().Length > 0 ? responseContent.Trim() : "Healthy";
+                        application.StatusMessage = null;
+                    }
+                }
+                else
+                {
+                    application.Status = "Unhealthy";
+                    application.StatusMessage = $"HTTP Status: {(int)response.StatusCode} {response.ReasonPhrase}";
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Handle timeout
+                if (timeoutCts.IsCancellationRequested)
+                {
+                    application.Status = "Unhealthy";
+                    application.StatusMessage = "Health check timed out after 5 seconds";
+                    _logger.LogWarning("Health check timed out for application {appName} in environment {envName}",
+                        application.Name, environment.Name);
+                }
+                else
+                {
+                    // Operation was canceled by the main cancellation token
+                    throw;
+                }
+            }
+
+            // Normalize status to one of the standard values
+            application.Status = NormalizeStatus(application.Status);
+
+            // Check if status or message changed
+            if (application.Status != previousStatus || application.StatusMessage != previousStatusMessage)
+            {
+                _logger.LogInformation(
+                    "Status changed for application {appName} in environment {envName}: {oldStatus} -> {newStatus}",
+                    application.Name, environment.Name, previousStatus, application.Status);
+                applicationChanged = true;
+            }
+
+            // Update application timestamp if changed
+            if (applicationChanged)
+                application.LastUpdated = DateTime.UtcNow;
+        }
+        catch (Exception ex)
+        {
+            // Get previous state if available
+            var previousStatus = "Unknown";
+            string? previousStatusMessage = null;
+
+            if (previousAppLookup != null && previousAppLookup.TryGetValue(application.Id, out var previousApp))
+            {
+                previousStatus = previousApp.Status;
+                previousStatusMessage = previousApp.StatusMessage;
+            }
+
+            // Update application status to indicate error
+            application.Status = "Error";
+            application.StatusMessage = $"Exception: {ex.Message}";
+
+            if (application.Status != previousStatus || application.StatusMessage != previousStatusMessage)
+            {
+                application.LastUpdated = DateTime.UtcNow;
+                applicationChanged = true;
+            }
+
+            _logger.LogWarning(ex, "Error checking health for application {appName} in environment {envName}",
+                application.Name, environment.Name);
+        }
+
+        return applicationChanged;
+    }
 
     // Helper method to normalize status values to standard ones
     private string NormalizeStatus(string status)
