@@ -6,14 +6,14 @@ public class ThemeService
 {
     private readonly IJSRuntime _jsRuntime;
 
-    public bool IsDarkMode { get; private set; }
-
-    public event Action? OnThemeChanged;
-
     public ThemeService(IJSRuntime jsRuntime)
     {
         _jsRuntime = jsRuntime;
     }
+
+    public bool IsDarkMode { get; private set; }
+
+    public event Action? OnThemeChanged;
 
     public async Task InitializeThemeAsync()
     {
@@ -46,12 +46,8 @@ public class ThemeService
     private async Task ApplyTheme()
     {
         if (IsDarkMode)
-        {
             await _jsRuntime.InvokeVoidAsync("document.documentElement.setAttribute", "data-bs-theme", "dark");
-        }
         else
-        {
             await _jsRuntime.InvokeVoidAsync("document.documentElement.removeAttribute", "data-bs-theme");
-        }
     }
 }

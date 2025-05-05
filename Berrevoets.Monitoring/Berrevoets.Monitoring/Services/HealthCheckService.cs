@@ -136,13 +136,11 @@ public class HealthCheckService : BackgroundService
 
         // Then check applications in parallel
         foreach (var environment in environments.Where(e => e.IsActive))
+        foreach (var application in environment.Applications)
         {
-            foreach (var application in environment.Applications)
-            {
-                // Create a task for each application health check
-                var task = CheckApplicationHealthAsync(environment, application, previousAppLookup, stoppingToken);
-                healthCheckTasks.Add(task);
-            }
+            // Create a task for each application health check
+            var task = CheckApplicationHealthAsync(environment, application, previousAppLookup, stoppingToken);
+            healthCheckTasks.Add(task);
         }
 
         // Wait for all health check tasks to complete
@@ -150,9 +148,7 @@ public class HealthCheckService : BackgroundService
 
         // If any of the checks resulted in a change, mark the data as changed
         if (results.Any(changed => changed))
-        {
             dataChanged = true;
-        }
 
         // Check for new or removed applications/environments if we have previous data
         if (_previousEnvironments != null)
