@@ -1,0 +1,89 @@
+﻿@using System.Text.Json
+@using Berrevoets.Monitoring.Entities.DTO
+@inject HttpClient Http
+@inject IJSRuntime JsRuntime
+
+<div class="quick-links">
+    @if (_isLoading)
+    {
+        <div class="text-center p-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>Loading quick links...</p>
+        </div>
+    }
+    else if (_links.Count == 0)
+    {
+        <div class="text-center">
+            <p class="text-muted">No quick links available.</p>
+            <p class="text-muted small">You can add quick links from the Admin page.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var link in _links.Where(l => l.IsActive).OrderBy(l => l.OrderNumber))
+        {
+            <QuickLink Link="link"/>
+        }
+    }
+</div>
+
+@code {
+    private List<QuickLinkDto> _links = new();
+    private bool _isLoading = true;
+
+    [Parameter]
+    public List<QuickLinkDto>? Links { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Links != null)
+        {
+            _links = Links;
+            _isLoading = false;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Links == null)
+        {
+            try
+            {
+                var fetchedLinks = await Http.GetFromJsonAsync<List<QuickLinkDto>>("/api/quicklinks");
+                if (fetchedLinks != null)
+                {
+                    _links = fetchedLinks;
+                }
+            }
+            catch (Exception ex)
+            {
+                await Console.Error.WriteLineAsync($"Error loading quick links: {ex}");
+                // Load from local storage as fallback
+                await LoadLinksFromLocalStorage();
+            }
+            finally
+            {
+                _isLoading = false;
+            }
+        }
+    }
+
+    private async Task LoadLinksFromLocalStorage()
+    {
+        try
+        {
+            var linksJson = await JsRuntime.InvokeAsync<string>("localStorage.getItem", "quickLinks");
+            if (!string.IsNullOrEmpty(linksJson))
+            {
+                _links = JsonSerializer.Deserialize<List<QuickLinkDto>>(linksJson) ?? new List<QuickLinkDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Error loading quick links from local storage: {ex}");
+        }
+    }
+
+}

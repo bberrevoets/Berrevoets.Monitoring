@@ -1,0 +1,22 @@
+﻿@using Berrevoets.Monitoring.Entities.DTO
+<a href="@Link.Url" target="_blank" class="btn @Link.ButtonClass w-100 mb-2">
+    @if (!string.IsNullOrEmpty(Link.Icon))
+    {
+        <IconComponent Icon="@Link.Icon" Size="16" style="margin-right: 0.5rem;"/>
+    }
+    else if (!string.IsNullOrEmpty(Icon))
+    {
+        <IconComponent Icon="@Icon" Size="16" style="margin-right: 0.5rem;"/>
+    }
+    @Link.Title
+</a>
+
+@code {
+
+    [Parameter]
+    public QuickLinkDto Link { get; set; } = new();
+
+    [Parameter]
+    public string? Icon { get; set; }
+
+}

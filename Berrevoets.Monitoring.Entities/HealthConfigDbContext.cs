@@ -10,6 +10,7 @@ public class HealthConfigDbContext : DbContext
 
     public DbSet<MonitoredEnvironment> MonitoredEnvironments { get; set; }
     public DbSet<MonitoredApplication> MonitoredApplications { get; set; }
+    public DbSet<QuickLink> QuickLinks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
