@@ -11,6 +11,7 @@
     <ProjectReference Include="..\..\Berrevoets.Monitoring.ServiceDefaults\Berrevoets.Monitoring.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Berrevoets.Monitoring.Client\Berrevoets.Monitoring.Client.csproj" />
     <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="9.2.1" />
+    <PackageReference Include="Aspire.Seq" Version="9.2.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
       <PrivateAssets>all</PrivateAssets>
