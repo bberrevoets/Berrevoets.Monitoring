@@ -4,84 +4,109 @@
 @using BootstrapIconsForDotNet
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JsRuntime
 @rendermode InteractiveWebAssembly
 
 <PageTitle>Monitoring Admin</PageTitle>
 
 <div class="container-fluid">
     <h3 class="mb-4">
-        <IconComponent Icon="@Icons.GEAR" Size="28" style="margin-right: 0.5rem;" />
+        <IconComponent Icon="@Icons.GEAR" Size="28" style="margin-right: 0.5rem;"/>
         Monitoring Administration
     </h3>
 
-    <div class="card mb-4">
-        <div class="card-header p-0">
-            <nav>
-                <div class="nav nav-tabs card-header-tabs ps-2" role="tablist">
-                    <button class="nav-link @(_activeTab == "environments" ? "active" : "") ms-0 rounded-0 rounded-top"
-                            @onclick='() => _activeTab = "environments"'
-                            id="environments-tab"
-                            role="tab"
-                            aria-controls="environments-content">
-                        <IconComponent Icon="@Icons.COLLECTION" Size="18" style="margin-right: 0.5rem;" />
-                        Environments
-                    </button>
-                    <button class="nav-link @(_activeTab == "applications" ? "active" : "")"
-                            @onclick='() => _activeTab = "applications"'
-                            id="applications-tab"
-                            role="tab"
-                            aria-controls="applications-content">
-                        <IconComponent Icon="@Icons.APP" Size="18" style="margin-right: 0.5rem;" />
-                        Applications
-                    </button>
-                    <button class="nav-link @(_activeTab == "settings" ? "active" : "")"
-                            @onclick='() => _activeTab = "settings"'
-                            id="settings-tab"
-                            role="tab"
-                            aria-controls="settings-content">
-                        <IconComponent Icon="@Icons.SLIDERS" Size="18" style="margin-right: 0.5rem;" />
-                        Settings
-                    </button>
-                </div>
-            </nav>
-        </div>
-        <div class="card-body">
-            @switch (_activeTab)
-            {
-                case "environments":
-                    <EnvironmentsManager Environments="_environments" OnEnvironmentUpdated="RefreshEnvironments" />
-                    break;
-                case "applications":
-                    <ApplicationsManager Environments="_environments" OnApplicationUpdated="RefreshEnvironments" />
-                    break;
-                case "settings":
-                    <SettingsManager />
-                    break;
-                default:
-                    <p>Select an option from the tabs above</p>
-                    break;
-            }
+    <div class="mt-4 mb-3">
+        <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="environments-tab" data-bs-toggle="tab" data-bs-target="#environments"
+                        type="button" role="tab" aria-controls="environments" aria-selected="true">
+                    Environments
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="applications-tab" data-bs-toggle="tab" data-bs-target="#applications"
+                        type="button" role="tab" aria-controls="applications" aria-selected="false">
+                    Applications
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="quicklinks-tab" data-bs-toggle="tab" data-bs-target="#quicklinks"
+                        type="button" role="tab" aria-controls="quicklinks" aria-selected="false">
+                    Quick Links
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings"
+                        type="button" role="tab" aria-controls="settings" aria-selected="false">
+                    Settings
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3" id="adminTabsContent">
+            <div class="tab-pane fade show active" id="environments" role="tabpanel" aria-labelledby="environments-tab">
+                <EnvironmentsManager Environments="_environments" OnEnvironmentUpdated="RefreshData"/>
+            </div>
+
+            <div class="tab-pane fade" id="applications" role="tabpanel" aria-labelledby="applications-tab">
+                <ApplicationsManager Environments="_environments" OnApplicationUpdated="RefreshData"/>
+            </div>
+
+            <div class="tab-pane fade" id="quicklinks" role="tabpanel" aria-labelledby="quicklinks-tab">
+                <QuickLinksManager OnQuickLinkUpdated="RefreshQuickLinks"/>
+            </div>
+
+            <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                <SettingsManager/>
+            </div>
         </div>
     </div>
 </div>
 
 @code {
-    private string _activeTab = "environments";
     private List<MonitoredEnvironmentDto> _environments = new();
 
     protected override async Task OnInitializedAsync()
     {
-        await RefreshEnvironments();
-        await base.OnInitializedAsync();
+        await RefreshData();
     }
 
-    private async Task RefreshEnvironments()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // Initialize Bootstrap tabs via JavaScript
+                await JsRuntime.InvokeVoidAsync("initBootstrapTabs");
+                Console.WriteLine("Bootstrap tabs initialized");
+
+                // Manually select the active tab if needed
+                await JsRuntime.InvokeVoidAsync("eval", @"
+                try {
+                    const activeTabButton = document.querySelector('#environments-tab');
+                    if (activeTabButton) {
+                        const tabInstance = new bootstrap.Tab(activeTabButton);
+                        tabInstance.show();
+                        console.log('Activated environments tab');
+                    }
+                } catch (e) {
+                    console.error('Error activating tab:', e);
+                }
+            ");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error initializing tabs: {ex}");
+            }
+        }
+    }
+
+    private async Task RefreshData()
     {
         try
         {
-            var absoluteUrl = NavigationManager.ToAbsoluteUri("/api/environments").ToString();
-            var environments = await Http.GetFromJsonAsync<List<MonitoredEnvironmentDto>>(absoluteUrl);
-
+            var environments = await Http.GetFromJsonAsync<List<MonitoredEnvironmentDto>>("/api/environments");
             if (environments != null)
             {
                 _environments = environments;
@@ -89,11 +114,14 @@
         }
         catch (Exception ex)
         {
-            await Console.Error.WriteLineAsync($"Error loading data: {ex}");
-        }
-        finally
-        {
-            StateHasChanged();
+            await Console.Error.WriteLineAsync($"Error loading environments: {ex}");
         }
     }
+
+    private async Task RefreshQuickLinks()
+    {
+        // No need to refresh environments data when quick links change
+        await Task.CompletedTask;
+    }
+
 }

@@ -1,0 +1,551 @@
+﻿@using System.Text.Json
+@using Berrevoets.Monitoring.Entities.DTO
+@using BootstrapIconsForDotNet
+@inject HttpClient Http
+@inject IJSRuntime JsRuntime
+
+<h2 class="mb-4">Quick Links Management</h2>
+
+<div class="mb-3 d-flex">
+    <div class="me-auto">
+        <button class="btn btn-primary" @onclick="() => ShowQuickLinkModal(null)">
+            <IconComponent Icon="@Icons.PLUS_CIRCLE" Size="18"/> Add Quick Link
+        </button>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+            <th>Title</th>
+            <th>URL</th>
+            <th>Style</th>
+            <th>Active</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="sortable-quicklinks">
+        @foreach (var link in _quickLinks.OrderBy(l => l.OrderNumber))
+        {
+            <tr draggable="true"
+                @ondragstart="@(() => HandleDragStart(link))"
+                @ondragover:preventDefault
+                @ondragenter:preventDefault
+                @ondrop="@(() => HandleDrop(link))"
+                @key="link.Id">
+                <td>
+                    <div class="drag-handle me-2" style="cursor: move; display: inline-block;">
+                        <IconComponent Icon="@Icons.GRIP_VERTICAL" Size="18"/>
+                    </div>
+                    @link.Title
+                </td>
+                <td class="text-truncate" style="max-width: 200px;" title="@link.Url">@link.Url</td>
+                <td>
+                    <span class="badge @link.ButtonClass">@GetButtonStyleName(link.ButtonClass)</span>
+                </td>
+                <td>
+                    @if (link.IsActive)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Inactive</span>
+                    }
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-primary me-1" @onclick="() => ShowQuickLinkModal(link)">
+                        <IconComponent Icon="@Icons.PENCIL" Size="16"/>
+                    </button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteQuickLink(link)">
+                        <IconComponent Icon="@Icons.TRASH" Size="16"/>
+                    </button>
+                </td>
+            </tr>
+        }
+        @if (_quickLinks.Count == 0)
+        {
+            <tr>
+                <td colspan="5" class="text-center">No quick links found. Click the "Add Quick Link" button to create one.</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@if (_isReordering)
+{
+    <div class="text-end mt-2">
+        <span class="text-muted me-2">Order changed. </span>
+        <button class="btn btn-sm btn-primary" @onclick="SaveReordering">
+            <IconComponent Icon="@Icons.SAVE" Size="16" style="margin-right: 0.5rem;"/> Save Order
+        </button>
+    </div>
+}
+
+@if (_showQuickLinkModal)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_editingQuickLink?.Id == Guid.Empty ? "Add" : "Edit") Quick Link</h5>
+                    <button type="button" class="btn-close" @onclick="CloseQuickLinkModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="_editingQuickLink" OnValidSubmit="SaveQuickLink">
+                        <DataAnnotationsValidator/>
+                        <ValidationSummary/>
+
+                        <div class="mb-3">
+                            <label for="linkTitle" class="form-label">Title</label>
+                            <InputText id="linkTitle" class="form-control" @bind-Value="_editingQuickLink!.Title"/>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="linkUrl" class="form-label">URL</label>
+                            <InputText id="linkUrl" class="form-control" @bind-Value="_editingQuickLink!.Url"/>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="buttonClass" class="form-label">Button Style</label>
+                            <select id="buttonClass" class="form-select" @bind="_editingQuickLink!.ButtonClass">
+                                <option value="btn-primary">Primary</option>
+                                <option value="btn-secondary">Secondary</option>
+                                <option value="btn-success">Success</option>
+                                <option value="btn-danger">Danger</option>
+                                <option value="btn-warning">Warning</option>
+                                <option value="btn-info">Info</option>
+                                <option value="btn-light">Light</option>
+                                <option value="btn-dark">Dark</option>
+                                <option value="btn-link">Link</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="linkIcon" class="form-label">Icon (Optional)</label>
+                            <div class="input-group">
+                                <select id="linkIcon" class="form-select" @bind="_editingQuickLink!.Icon">
+                                    <option value="">No Icon</option>
+                                    <option value="@Icons.ACTIVITY">Activity</option>
+                                    <option value="@Icons.ALARM">Alarm</option>
+                                    <option value="@Icons.ALIGN_CENTER">Align Center</option>
+                                    <option value="@Icons.ARCHIVE">Archive</option>
+                                    <option value="@Icons.ARROW_RIGHT">Arrow Right</option>
+                                    <option value="@Icons.AT">At Symbol</option>
+                                    <option value="@Icons.BANK">Bank</option>
+                                    <option value="@Icons.BELL">Bell</option>
+                                    <option value="@Icons.BOOKMARK">Bookmark</option>
+                                    <option value="@Icons.BUILDING">Building</option>
+                                    <option value="@Icons.CALENDAR">Calendar</option>
+                                    <option value="@Icons.CHECK">Check</option>
+                                    <option value="@Icons.CLOCK">Clock</option>
+                                    <option value="@Icons.CLOUD">Cloud</option>
+                                    <option value="@Icons.CODE">Code</option>
+                                    <option value="@Icons.ENVELOPE">Envelope</option>
+                                    <option value="@Icons.FILE">File</option>
+                                    <option value="@Icons.FOLDER">Folder</option>
+                                    <option value="@Icons.GEAR">Gear</option>
+                                    <option value="@Icons.GITHUB">GitHub</option>
+                                    <option value="@Icons.GLOBE">Globe</option>
+                                    <option value="@Icons.GRAPH_UP">Graph Up</option>
+                                    <option value="@Icons.HOUSE">House</option>
+                                    <option value="@Icons.INFO">Info</option>
+                                    <option value="@Icons.KEY">Key</option>
+                                    <option value="@Icons.LINK">Link</option>
+                                    <option value="@Icons.LIST">List</option>
+                                    <option value="@Icons.LOCK">Lock</option>
+                                    <option value="@Icons.MAP">Map</option>
+                                    <option value="@Icons.PAPERCLIP">Paperclip</option>
+                                    <option value="@Icons.PEOPLE">People</option>
+                                    <option value="@Icons.PERSON">Person</option>
+                                    <option value="@Icons.PHONE">Phone</option>
+                                    <option value="@Icons.QUESTION">Question</option>
+                                    <option value="@Icons.SEARCH">Search</option>
+                                    <option value="@Icons.SERVER">Server</option>
+                                    <option value="@Icons.SHIELD">Shield</option>
+                                    <option value="@Icons.STAR">Star</option>
+                                    <option value="@Icons.TOOLS">Tools</option>
+                                    <option value="@Icons.TROPHY">Trophy</option>
+                                    <option value="@Icons.WINDOW">Window</option>
+                                </select>
+                                <span class="input-group-text">
+                                    @if (!string.IsNullOrEmpty(_editingQuickLink!.Icon))
+                                    {
+                                        <IconComponent Icon="@_editingQuickLink!.Icon" Size="20"/>
+                                    }
+                                    else
+                                    {
+                                        <span>(No icon selected)</span>
+                                    }
+                                </span>
+                            </div>
+                            <div class="form-text">Select an icon to display with this quick link (optional)</div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <InputCheckbox id="linkActive" class="form-check-input" @bind-Value="_editingQuickLink!.IsActive"/>
+                            <label class="form-check-label" for="linkActive">
+                                Link Active
+                            </label>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseQuickLinkModal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private List<QuickLinkDto> _quickLinks = new();
+    private bool _showQuickLinkModal;
+    private QuickLinkDto? _editingQuickLink;
+
+    // Drag-and-drop related fields
+    private QuickLinkDto? _draggedQuickLink;
+    private bool _isReordering;
+
+    [Parameter]
+    public EventCallback OnQuickLinkUpdated { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadQuickLinks();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JsRuntime.InvokeVoidAsync("dragHelper.initialize");
+        }
+    }
+
+    private string GetButtonStyleName(string buttonClass)
+    {
+        return buttonClass switch
+        {
+            "btn-primary" => "Primary",
+            "btn-secondary" => "Secondary",
+            "btn-success" => "Success",
+            "btn-danger" => "Danger",
+            "btn-warning" => "Warning",
+            "btn-info" => "Info",
+            "btn-light" => "Light",
+            "btn-dark" => "Dark",
+            "btn-link" => "Link",
+            _ => buttonClass
+        };
+    }
+
+    private async Task LoadQuickLinks()
+    {
+        try
+        {
+            var links = await Http.GetFromJsonAsync<List<QuickLinkDto>>("/api/quicklinks");
+            if (links != null)
+            {
+                _quickLinks = links;
+            }
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Error loading quick links: {ex}");
+
+            // Try to load from local storage as fallback
+            try
+            {
+                var linksJson = await JsRuntime.InvokeAsync<string>("localStorage.getItem", "quickLinks");
+                if (!string.IsNullOrEmpty(linksJson))
+                {
+                    _quickLinks = JsonSerializer.Deserialize<List<QuickLinkDto>>(linksJson) ?? new List<QuickLinkDto>();
+                }
+            }
+            catch (Exception localEx)
+            {
+                await Console.Error.WriteLineAsync($"Error loading quick links from local storage: {localEx}");
+            }
+        }
+    }
+
+    private void ShowQuickLinkModal(QuickLinkDto? quickLink)
+    {
+        if (quickLink == null)
+        {
+            // Create new quick link
+            _editingQuickLink = new QuickLinkDto
+            {
+                Id = Guid.Empty,
+                Title = "",
+                Url = "https://",
+                ButtonClass = "btn-primary",
+                OrderNumber = _quickLinks.Count > 0 ? _quickLinks.Max(l => l.OrderNumber) + 10 : 10,
+                IsActive = true,
+                Icon = null
+            };
+        }
+        else
+        {
+            // Edit existing quick link
+            _editingQuickLink = new QuickLinkDto
+            {
+                Id = quickLink.Id,
+                Title = quickLink.Title,
+                Url = quickLink.Url,
+                ButtonClass = quickLink.ButtonClass,
+                OrderNumber = quickLink.OrderNumber,
+                IsActive = quickLink.IsActive,
+                Icon = quickLink.Icon
+            };
+        }
+
+        _showQuickLinkModal = true;
+    }
+
+    private void CloseQuickLinkModal()
+    {
+        _showQuickLinkModal = false;
+        _editingQuickLink = null;
+    }
+
+    private async Task SaveQuickLink()
+    {
+        if (_editingQuickLink == null) return;
+
+        try
+        {
+            bool success = false;
+
+            if (_editingQuickLink.Id == Guid.Empty)
+            {
+                // Create new quick link
+                _editingQuickLink.Id = Guid.NewGuid();
+
+                try
+                {
+                    await Http.PostAsJsonAsync("/api/quicklinks", _editingQuickLink);
+                    success = true;
+                    // Add to local collection to avoid reloading
+                    _quickLinks.Add(_editingQuickLink);
+                }
+                catch (Exception ex)
+                {
+                    await Console.Error.WriteLineAsync($"Error creating quick link on server: {ex}");
+                    // Fall back to local storage
+                    _quickLinks.Add(_editingQuickLink);
+                    await SaveToLocalStorage();
+                    success = true;
+                }
+            }
+            else
+            {
+                // Update existing quick link
+                try
+                {
+                    await Http.PutAsJsonAsync($"/api/quicklinks/{_editingQuickLink.Id}", _editingQuickLink);
+                    success = true;
+
+                    // Update local copy to avoid reloading
+                    var index = _quickLinks.FindIndex(l => l.Id == _editingQuickLink.Id);
+                    if (index >= 0)
+                    {
+                        _quickLinks[index] = _editingQuickLink;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await Console.Error.WriteLineAsync($"Error updating quick link on server: {ex}");
+                    // Fall back to local storage
+                    var index = _quickLinks.FindIndex(l => l.Id == _editingQuickLink.Id);
+                    if (index >= 0)
+                    {
+                        _quickLinks[index] = _editingQuickLink;
+                        await SaveToLocalStorage();
+                        success = true;
+                    }
+                }
+            }
+
+            if (success)
+            {
+                // Sort the links by OrderNumber to maintain consistent view
+                _quickLinks = _quickLinks.OrderBy(l => l.OrderNumber).ToList();
+                await OnQuickLinkUpdated.InvokeAsync();
+                CloseQuickLinkModal();
+            }
+            else
+            {
+                // Only reload if we couldn't update the local collection
+                await LoadQuickLinks();
+                await OnQuickLinkUpdated.InvokeAsync();
+                CloseQuickLinkModal();
+            }
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Error saving quick link: {ex}");
+        }
+    }
+
+    private async Task DeleteQuickLink(QuickLinkDto quickLink)
+    {
+        if (!await JsRuntime.InvokeAsync<bool>("confirm", new object[]
+                { $"Are you sure you want to delete the quick link '{quickLink.Title}'?" }))
+            return;
+
+        try
+        {
+            bool success = false;
+
+            try
+            {
+                await Http.DeleteAsync($"/api/quicklinks/{quickLink.Id}");
+                success = true;
+
+                // Remove from local collection to avoid reloading
+                _quickLinks.RemoveAll(l => l.Id == quickLink.Id);
+            }
+            catch (Exception ex)
+            {
+                await Console.Error.WriteLineAsync($"Error deleting quick link from server: {ex}");
+                // Fall back to local storage
+                _quickLinks.RemoveAll(l => l.Id == quickLink.Id);
+                await SaveToLocalStorage();
+                success = true;
+            }
+
+            if (success)
+            {
+                await OnQuickLinkUpdated.InvokeAsync();
+            }
+            else
+            {
+                // Only reload if we couldn't update the local collection
+                await LoadQuickLinks();
+                await OnQuickLinkUpdated.InvokeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Error deleting quick link: {ex}");
+        }
+    }
+
+    private async Task SaveReordering()
+    {
+        try
+        {
+            bool allSuccess = true;
+
+            // For each quick link that was reordered
+            foreach (var link in _quickLinks)
+            {
+                var updateDto = new QuickLinkDto
+                    {
+                        Id = link.Id,
+                        Title = link.Title,
+                        Url = link.Url,
+                        ButtonClass = link.ButtonClass,
+                        IsActive = link.IsActive,
+                        OrderNumber = link.OrderNumber,
+                        Icon = link.Icon
+                    };
+
+                try
+                {
+                    await Http.PutAsJsonAsync($"/api/quicklinks/{link.Id}", updateDto);
+                }
+                catch (Exception ex)
+                {
+                    await Console.Error.WriteLineAsync($"Error updating quick link order on server: {ex}");
+                    allSuccess = false;
+                }
+            }
+
+            // Always update local storage as fallback
+            await SaveToLocalStorage();
+
+            _isReordering = false;
+
+            if (!allSuccess)
+            {
+                // Only reload if there were server errors
+                await LoadQuickLinks();
+            }
+
+            await OnQuickLinkUpdated.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Error saving quick link order: {ex}");
+        }
+    }
+
+
+    private async Task SaveToLocalStorage()
+    {
+        try
+        {
+            var linksJson = JsonSerializer.Serialize(_quickLinks);
+            await JsRuntime.InvokeVoidAsync("localStorage.setItem", "quickLinks", linksJson);
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Error saving quick links to local storage: {ex}");
+        }
+    }
+
+    // Drag and drop handling
+    private void HandleDragStart(QuickLinkDto quickLink)
+    {
+        Console.WriteLine("Start Dragging quick link: " + quickLink.Title);
+        _draggedQuickLink = quickLink;
+    }
+
+    private void HandleDrop(QuickLinkDto targetQuickLink)
+    {
+        Console.WriteLine("Drop onto quick link: " + targetQuickLink.Title);
+
+        if (_draggedQuickLink == null || _draggedQuickLink.Id == targetQuickLink.Id)
+        {
+            Console.WriteLine("Invalid drop operation - same item or null dragged item");
+            return;
+        }
+
+        var draggedOrder = _draggedQuickLink.OrderNumber;
+        var targetOrder = targetQuickLink.OrderNumber;
+
+        // Determine reordering direction
+        if (draggedOrder < targetOrder)
+        {
+            // Moving down - adjust all items between
+            foreach (var link in _quickLinks.Where(l => l.OrderNumber > draggedOrder && l.OrderNumber <= targetOrder))
+            {
+                link.OrderNumber--;
+            }
+        }
+        else
+        {
+            // Moving up - adjust all items between
+            foreach (var link in _quickLinks.Where(l => l.OrderNumber < draggedOrder && l.OrderNumber >= targetOrder))
+            {
+                link.OrderNumber++;
+            }
+        }
+
+        // Set the dragged item's new position
+        _draggedQuickLink.OrderNumber = targetOrder;
+
+        // Indicate order has been changed
+        _isReordering = true;
+
+        StateHasChanged();
+    }
+}
