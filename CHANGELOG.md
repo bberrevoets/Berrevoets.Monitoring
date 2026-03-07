@@ -13,6 +13,13 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Upgraded from .NET 9 to .NET 10 across all projects
+- Upgraded Aspire from 9.2.1 to 13.1.2
+- Updated Entity Framework Core packages to 10.0.3
+- Updated ASP.NET Core packages to 10.0.3
+- Updated OpenTelemetry packages to 1.15.0
+- Updated Microsoft.Extensions packages to 10.x
+- Updated remaining dependencies to latest stable versions
 - Updated README.md with full project documentation
 
 ## 2025-05-05
