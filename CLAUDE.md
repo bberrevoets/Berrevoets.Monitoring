@@ -23,6 +23,21 @@ dotnet ef migrations add <MigrationName> \
 
 There are no tests in this solution.
 
+## Configuration
+
+All configuration uses `appsettings.json` only — there are no environment-specific
+settings files (`appsettings.Development.json` is gitignored). Sensitive values use
+the placeholder `"InSecrets"` in `appsettings.json`, with actual values stored in
+.NET User Secrets for local development.
+
+```bash
+# Set the SQL Server password for local development
+dotnet user-secrets set "Parameters:password" "<actual-password>" \
+  --project Berrevoets.Monitoring.AppHost
+```
+
+The deploy pipeline transforms `appsettings.json` to inject real secrets.
+
 ## Architecture
 
 This is a **.NET 10 Aspire** health monitoring dashboard that periodically checks
