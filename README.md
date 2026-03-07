@@ -29,6 +29,20 @@ displays live status updates via SignalR.
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
   (for Aspire-managed SQL Server container)
 
+### Configuration
+
+All configuration lives in `appsettings.json`. Sensitive values (like the SQL
+Server password) use the placeholder `"InSecrets"` and are provided via .NET
+User Secrets for local development:
+
+```bash
+dotnet user-secrets set "Parameters:password" "<your-password>" \
+  --project Berrevoets.Monitoring.AppHost
+```
+
+Environment-specific settings files (`appsettings.Development.json`) are not
+used and are gitignored.
+
 ### Running the Application
 
 ```bash
