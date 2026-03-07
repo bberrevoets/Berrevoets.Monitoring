@@ -25,7 +25,7 @@ There are no tests in this solution.
 
 ## Architecture
 
-This is a **.NET 9 Aspire** health monitoring dashboard that periodically checks
+This is a **.NET 10 Aspire** health monitoring dashboard that periodically checks
 HTTP health endpoints of configured applications and displays real-time status
 via a Blazor UI.
 
