@@ -1,6 +1,6 @@
 # Berrevoets.Monitoring
 
-A real-time health monitoring dashboard built with .NET 9 Aspire and Blazor.
+A real-time health monitoring dashboard built with .NET 10 Aspire and Blazor.
 Periodically checks HTTP health endpoints of configured applications and
 displays live status updates via SignalR.
 
@@ -15,7 +15,7 @@ displays live status updates via SignalR.
 
 ## Tech Stack
 
-- .NET 9 / Aspire 9.2.1
+- .NET 10 / Aspire 13.1.2
 - Blazor (Interactive Auto: Server + WebAssembly)
 - Entity Framework Core with SQL Server
 - SignalR for real-time communication
@@ -25,7 +25,7 @@ displays live status updates via SignalR.
 
 ### Prerequisites
 
-- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
   (for Aspire-managed SQL Server container)
 
