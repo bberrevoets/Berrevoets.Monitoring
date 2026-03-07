@@ -13,6 +13,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Consolidated settings to `appsettings.json` + User Secrets; removed all
+  `appsettings.Development.json` files
+- Added `Parameters.password` placeholder (`"InSecrets"`) to AppHost
+  `appsettings.json`
+- Removed redundant configuration loading in web app `Program.cs`
+- Added `appsettings.Development.json` to `.gitignore`
 - Upgraded from .NET 9 to .NET 10 across all projects
 - Upgraded Aspire from 9.2.1 to 13.1.2
 - Updated Entity Framework Core packages to 10.0.3
