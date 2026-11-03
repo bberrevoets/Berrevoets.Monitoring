@@ -9,9 +9,6 @@ using _Imports = Berrevoets.Monitoring.Client._Imports;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddJsonFile("appsettings.json", false, true);
-builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", true, true);
-
 builder.Services.Configure<HealthCheckSettings>(
     builder.Configuration.GetSection("HealthCheckService"));
 
