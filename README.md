@@ -66,3 +66,18 @@ runs database migrations, seeds sample data, and launches the web application.
 ## Author
 
 Bert Berrevoets - Berrevoets Systems
+
+## Conventions
+
+- **Branching:** GitHub Flow. `main` is protected and accepts changes only through pull requests.
+- **Markdown:** linted with `markdownlint-cli2`, 180 character limit.
+
+  ```sh
+  npx markdownlint-cli2 "**/*.md"
+  ```
+
+- **Binaries:** tracked with Git LFS; the covered types and any deliberate exceptions are listed in
+  [AGENTS.md](AGENTS.md). Run `git lfs install` once per machine before cloning; in a clone made without it, run
+  `git lfs install` and then `git lfs pull` to download the files.
+- **Agent instructions:** in [AGENTS.md](AGENTS.md), read by Claude Code, Codex and any other coding agent.
+  `CLAUDE.md` only imports it, so edit `AGENTS.md`.
