@@ -30,6 +30,23 @@ Author: *@dependabot*
 
 - Grouped security updates of the NuGet packages (#23, #24, #25; 2026-04 to 2026-10)
 
+### Security
+
+Author: *Bert Berrevoets, Claude Opus 5.5*
+
+- Three high-severity transitive packages fixed (Dependabot did not report them):
+  - `MessagePack` 2.5.192 → 2.5.307 in the AppHost, by upgrading Aspire 13.1.2 → 13.6.4 (`Aspire.AppHost.Sdk`,
+    `Aspire.Hosting.AppHost`, `Aspire.Hosting.SqlServer`, `Aspire.Microsoft.EntityFrameworkCore.SqlServer`). The
+    13.2–13.6 release notes were checked first: no breaking change touches this code (nothing reads the renamed
+    service-discovery or `DatabaseName` variables)
+  - `Microsoft.AspNetCore.SignalR.Common` 10.0.3 → 10.0.14 (CVE-2026-70159), with all Microsoft 10.0.x packages
+    (ASP.NET Core, EF Core, Extensions.Hosting) on 10.0.14
+  - `System.Security.Cryptography.Pkcs` 9.0.11 → 10.0.14 (CVE-2026-84008): `Microsoft.Data.SqlClient` 6.1.4 → 7.0.2
+    (required by the Aspire 13.6 EF integration) still brings 9.0.13 / 10.0.12, so Entities and the AppHost reference
+    Pkcs 10.0.14 directly
+- Verified with an AppHost run on 2026-11-03: SQL Server container, migration service (exit 0, seed data) and web app
+  all healthy; `/api/environments` returned the seeded data
+
 ## 2026-03-07
 
 ### Added
