@@ -1,0 +1,27 @@
+Berrevoets.Monitoring.AppHost/Berrevoets.Monitoring.AppHost.csproj
+  s_66be80588d2b7a::t_3bf519b42a1f75 3,14-18
+Berrevoets.Monitoring.Entities/Berrevoets.Monitoring.Entities.csproj
+  s_66be80588d2b7a::t_74df52e64e8ab7 11-16,20-21
+Berrevoets.Monitoring.MigrationService/Berrevoets.Monitoring.MigrationService.csproj
+  s_66be80588d2b7a::t_fd5f59e620d36d 11-12
+Berrevoets.Monitoring/Berrevoets.Monitoring.Client/Berrevoets.Monitoring.Client.csproj
+  s_66be80588d2b7a::t_6c5a589af6e662 13-14
+Berrevoets.Monitoring/Berrevoets.Monitoring/Berrevoets.Monitoring.csproj
+  s_66be80588d2b7a::t_090bbd14ac952e 13-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "60f59fbcd36892e5a0ec1dd2a8feb63fbee4b662",
+  "prompts": {},
+  "sessions": {
+    "s_66be80588d2b7a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "26349a25-b31d-4ae6-bdbc-bb4d831f555b",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "B.N. Berrevoets <bert@berrevoets.net>"
+    }
+  }
+}
