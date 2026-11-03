@@ -15,7 +15,7 @@ displays live status updates via SignalR.
 
 ## Tech Stack
 
-- .NET 10 / Aspire 13.1.2
+- .NET 10 / Aspire 13.6.4
 - Blazor (Interactive Auto: Server + WebAssembly)
 - Entity Framework Core with SQL Server
 - SignalR for real-time communication
