@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.6.4" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.6.5" />
     <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.6.4" />
     <!-- Microsoft.Data.SqlClient 7.0.2 (via Aspire / EF Core SqlServer) brings System.Security.Cryptography.Pkcs
          10.0.12: CVE-2026-84008 (fixed in 9.0.21 / 10.0.13). Remove once SqlClient brings a fixed version. -->
