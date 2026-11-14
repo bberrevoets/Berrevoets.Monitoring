@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - **Bert Berrevoets** -- project owner
 - **Claude Opus 4.6** -- co-author of the 2026-03 .NET 10 / Aspire 13.1 update and documentation
 - **Claude Opus 5.5** -- co-author of the 2026-11 AI agent setup
+- **Claude Fable 5.2** -- co-author of the 2026-11 Aspire 13.6.5 security update
 - **@dependabot** -- grouped security updates
 
 ## [Unreleased]
@@ -32,7 +33,7 @@ Author: *@dependabot*
 
 ### Security
 
-Author: *Bert Berrevoets, Claude Opus 5.5*
+Author: *Bert Berrevoets, Claude Opus 5.5, Claude Fable 5.2, @dependabot*
 
 - Three high-severity transitive packages fixed (Dependabot did not report them):
   - `MessagePack` 2.5.192 → 2.5.307 in the AppHost, by upgrading Aspire 13.1.2 → 13.6.4 (`Aspire.AppHost.Sdk`,
@@ -46,6 +47,12 @@ Author: *Bert Berrevoets, Claude Opus 5.5*
     Pkcs 10.0.14 directly
 - Verified with an AppHost run on 2026-11-03: SQL Server container, migration service (exit 0, seed data) and web app
   all healthy; `/api/environments` returned the seeded data
+- Aspire 13.6.4 → 13.6.5 (#29) for CVE-2026-120006, a high-severity elevation of privilege in the Aspire dashboard
+  and CLI (Dependabot alert #6). Dependabot bumped only `Aspire.Hosting.AppHost`; `Aspire.AppHost.Sdk`,
+  `Aspire.Hosting.SqlServer` and `Aspire.Microsoft.EntityFrameworkCore.SqlServer` were raised to 13.6.5 in the same
+  PR, so all Aspire references stay on one version. Checked with a Release build and
+  `dotnet list package --vulnerable --include-transitive` (no vulnerable packages); no AppHost run. The
+  `System.Security.Cryptography.Pkcs` pin stays: `Microsoft.Data.SqlClient` is still 7.0.2
 
 ## 2026-03-07
 
