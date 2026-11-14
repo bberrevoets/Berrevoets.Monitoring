@@ -1,0 +1,27 @@
+Berrevoets.Monitoring.MigrationService/Berrevoets.Monitoring.MigrationService.csproj
+  s_3414b01a203c38::t_81143b0e978252 11
+Berrevoets.Monitoring/Berrevoets.Monitoring/Berrevoets.Monitoring.csproj
+  s_3414b01a203c38::t_81143b0e978252 13
+Berrevoets.Monitoring.AppHost/Berrevoets.Monitoring.AppHost.csproj
+  s_3414b01a203c38::t_81143b0e978252 3,15
+CHANGELOG.md
+  s_3414b01a203c38::t_a16a22d7b5c275 10,36,50-55
+README.md
+  s_3414b01a203c38::t_a16a22d7b5c275 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6b856cc1d573790d590ea1aa043f1e5d41c49511",
+  "prompts": {},
+  "sessions": {
+    "s_3414b01a203c38": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "44e3e4ce-f78d-4cf0-b373-ceea6ceae3a3",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "B.N. Berrevoets <bert@berrevoets.net>"
+    }
+  }
+}
